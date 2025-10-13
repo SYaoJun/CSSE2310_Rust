@@ -111,7 +111,7 @@ show_diff() {
 }
 
 # Compile the program
-cargo build &> /dev/null
+cargo build --bin uqentropy &> /dev/null
 if [ $? -ne 0 ]; then
     echo "Compilation failed"
     exit 1

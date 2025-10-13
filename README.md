@@ -1,1 +1,5 @@
 # uqentropy
+```sh
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+```
