@@ -1,0 +1,21 @@
+Welcome to UQEntropy!
+Written by s4905773.
+Enter candidate passwords to check their strength.
+Candidate password would be matched on guess number 1
+Password entropy calculated to be 1.0
+Password strength rating: very weak
+No match would be found after checking 11 passwords
+Password entropy calculated to be 125.4
+Password strength rating: very strong
+Candidate password would be matched on guess number 2
+Password entropy calculated to be 2.0
+Password strength rating: very weak
+No match would be found after checking 11 passwords
+Password entropy calculated to be 136.9
+Password strength rating: very strong
+Candidate password would be matched on guess number 7
+Password entropy calculated to be 3.8
+Password strength rating: very weak
+Candidate password would be matched on guess number 10
+Password entropy calculated to be 4.3
+Password strength rating: very weak

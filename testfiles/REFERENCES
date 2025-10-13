@@ -1,0 +1,18 @@
+Some of the password files have been sourced from https://github.com/danielmiessler/SecLists/tree/master/Passwords/Common-Credentials. 
+These are referenced below. Note that these files may contain words considered 
+offensive or obscene by some.
+
+top25.passwords
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/top-passwords-shortlist.txt
+
+top1050.txt
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/best1050.txt
+
+top10000.txt
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10k-most-common.txt
+
+top1000000.txt
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10-million-password-list-top-1000000.txt
+
+2023-200_most_used_passwords.txt
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/2023-200_most_used_passwords.txt

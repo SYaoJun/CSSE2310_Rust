@@ -1,6 +1,10 @@
 [package]
-name = "a1"
+name = "uqentropy"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "uqentropy"
+path = "src/uqentropy.rs"
 
 [dependencies]

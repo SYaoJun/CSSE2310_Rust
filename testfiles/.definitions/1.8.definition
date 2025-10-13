@@ -1,0 +1,11 @@
+# Details for test 1.8. ($1 will be run_test, explain_test or mark_test)
+function test1.8() {
+    "$1" 1.8 "invalid_cmd_lines08" \
+        "Check uqentropy reports usage error with argument(s) '--double --case --digit-append 3 --leet'" \
+        -timeout 3 \
+        -exit 2 \
+        -stdout testfiles/empty \
+        -stderr testfiles/1.8.stderr \
+        "./uqentropy" '--double' '--case' '--digit-append' '3' '--leet'
+}
+

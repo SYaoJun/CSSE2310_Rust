@@ -1,0 +1,13 @@
+# Details for test 6.2. ($1 will be run_test, explain_test or mark_test)
+function test6.2() {
+    "$1" 6.2 "one_file02" \
+        "Check uqentropy handles password file with one entry - matching single candidate password" \
+        -timeout 10 \
+        -maxattempts 1 \
+        -stdin "testfiles/6.2.in" \
+        -exit 14 \
+        -stdout testfiles/6.2.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" 'testfiles/6.2.file'
+}
+

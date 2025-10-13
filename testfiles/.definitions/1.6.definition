@@ -1,0 +1,11 @@
+# Details for test 1.6. ($1 will be run_test, explain_test or mark_test)
+function test1.6() {
+    "$1" 1.6 "invalid_cmd_lines06" \
+        "Check uqentropy reports usage error with argument(s) '--digit-append 4'" \
+        -timeout 3 \
+        -exit 2 \
+        -stdout testfiles/empty \
+        -stderr testfiles/1.6.stderr \
+        "./uqentropy" '--digit-append' '4'
+}
+

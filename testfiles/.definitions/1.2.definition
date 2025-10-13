@@ -1,0 +1,11 @@
+# Details for test 1.2. ($1 will be run_test, explain_test or mark_test)
+function test1.2() {
+    "$1" 1.2 "invalid_cmd_lines02" \
+        "Check uqentropy reports usage error with argument(s) '--unexpected'" \
+        -timeout 3 \
+        -exit 2 \
+        -stdout testfiles/empty \
+        -stderr testfiles/1.2.stderr \
+        "./uqentropy" '--unexpected'
+}
+

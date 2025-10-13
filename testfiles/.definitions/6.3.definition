@@ -1,0 +1,13 @@
+# Details for test 6.3. ($1 will be run_test, explain_test or mark_test)
+function test6.3() {
+    "$1" 6.3 "one_file03" \
+        "Check uqentropy handles password file with multiple newline separated entries - with single matching candidate password" \
+        -timeout 10 \
+        -maxattempts 1 \
+        -stdin "testfiles/6.3.in" \
+        -exit 14 \
+        -stdout testfiles/6.3.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" '/usr/share/dict/words'
+}
+

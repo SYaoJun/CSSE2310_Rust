@@ -1,0 +1,2 @@
+uqentropy: unable to open file "/etc/shadow" for reading
+uqentropy: unable to open file "/non/existent/file" for reading

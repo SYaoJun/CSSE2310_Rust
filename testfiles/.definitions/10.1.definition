@@ -1,0 +1,13 @@
+# Details for test 10.1. ($1 will be run_test, explain_test or mark_test)
+function test10.1() {
+    "$1" 10.1 "doubleup_check01" \
+        "Check uqentropy with --double argument handles empty standard input with single password file" \
+        -timeout 5 \
+        -maxattempts 1 \
+        -stdin "/dev/null" \
+        -exit 14 \
+        -stdout testfiles/10.1.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" '--double' 'testfiles/top25.passwords'
+}
+

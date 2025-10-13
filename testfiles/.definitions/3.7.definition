@@ -1,0 +1,10 @@
+# Details for test 3.7. ($1 will be run_test, explain_test or mark_test)
+function test3.7() {
+    "$1" 3.7 "welcome_message07" \
+        "Check welcome message is printed with argument(s) '--leet testfiles/top1050.txt'" \
+        -timeout 3 \
+        -stdin "/dev/null" \
+        -stdout testfiles/3.7.stdout \
+        "testfiles/run_uqentropy_and_save_first_three_lines.sh" 
+}
+

@@ -1,0 +1,11 @@
+# Details for test 1.11. ($1 will be run_test, explain_test or mark_test)
+function test1.11() {
+    "$1" 1.11 "invalid_cmd_lines11" \
+        "Check uqentropy reports usage error with argument(s) '--double --unexpected /non/existent/file /dev/null'" \
+        -timeout 3 \
+        -exit 2 \
+        -stdout testfiles/empty \
+        -stderr testfiles/1.11.stderr \
+        "./uqentropy" '--double' '--unexpected' '/non/existent/file' '/dev/null'
+}
+

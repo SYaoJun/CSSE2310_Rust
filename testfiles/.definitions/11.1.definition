@@ -1,0 +1,13 @@
+# Details for test 11.1. ($1 will be run_test, explain_test or mark_test)
+function test11.1() {
+    "$1" 11.1 "leet_check01" \
+        "Check uqentropy with --leet argument handles single password file with no letters able to be substituted" \
+        -timeout 5 \
+        -maxattempts 1 \
+        -stdin "testfiles/top25.passwords" \
+        -exit 14 \
+        -stdout testfiles/11.1.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" '--leet' 'testfiles/11.1.file'
+}
+

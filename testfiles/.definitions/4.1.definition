@@ -1,0 +1,13 @@
+# Details for test 4.1. ($1 will be run_test, explain_test or mark_test)
+function test4.1() {
+    "$1" 4.1 "invalid_candidate_passwords01" \
+        "Check uqentropy detects invalid password with empty password" \
+        -timeout 10 \
+        -maxattempts 1 \
+        -stdin "testfiles/4.1.in" \
+        -exit 14 \
+        -stdout testfiles/4.1.stdout \
+        -stderr testfiles/4.1.stderr \
+        "./uqentropy" 
+}
+

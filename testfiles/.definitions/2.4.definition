@@ -1,0 +1,11 @@
+# Details for test 2.4. ($1 will be run_test, explain_test or mark_test)
+function test2.4() {
+    "$1" 2.4 "file_errors04" \
+        "Check uqentropy reports file error(s) with argument(s) '/dev/null'" \
+        -timeout 3 \
+        -exit 20 \
+        -stdout testfiles/empty \
+        -stderr testfiles/2.4.stderr \
+        "./uqentropy" '/dev/null'
+}
+

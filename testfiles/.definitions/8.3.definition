@@ -1,0 +1,13 @@
+# Details for test 8.3. ($1 will be run_test, explain_test or mark_test)
+function test8.3() {
+    "$1" 8.3 "case_check03" \
+        "Check uqentropy with --case argument handles single password file with several all-letter passwords and no match from two candidate passwords" \
+        -timeout 5 \
+        -maxattempts 1 \
+        -stdin "testfiles/8.3.in" \
+        -exit 0 \
+        -stdout testfiles/8.3.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" '--case' 'testfiles/8.3.file'
+}
+

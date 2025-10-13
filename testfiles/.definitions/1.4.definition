@@ -1,0 +1,11 @@
+# Details for test 1.4. ($1 will be run_test, explain_test or mark_test)
+function test1.4() {
+    "$1" 1.4 "invalid_cmd_lines04" \
+        "Check uqentropy reports usage error with argument(s) '--leet'" \
+        -timeout 3 \
+        -exit 2 \
+        -stdout testfiles/empty \
+        -stderr testfiles/1.4.stderr \
+        "./uqentropy" '--leet'
+}
+

@@ -1,0 +1,13 @@
+# Details for test 5.8. ($1 will be run_test, explain_test or mark_test)
+function test5.8() {
+    "$1" 5.8 "no_cmd_line_args08" \
+        "Check uqentropy calculates entropy and strength rating(s) correctly with one password that is a combination of lower case letters and punctuation characters" \
+        -timeout 10 \
+        -maxattempts 1 \
+        -stdin "testfiles/5.8.in" \
+        -exit 0 \
+        -stdout testfiles/5.8.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" 
+}
+

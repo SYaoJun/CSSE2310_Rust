@@ -1,0 +1,13 @@
+# Details for test 7.1. ($1 will be run_test, explain_test or mark_test)
+function test7.1() {
+    "$1" 7.1 "multiple_files01" \
+        "Check uqentropy handles two very small newline separated password files - with no matching password" \
+        -timeout 10 \
+        -maxattempts 1 \
+        -stdin "testfiles/7.1.in" \
+        -exit 14 \
+        -stdout testfiles/7.1.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" 'testfiles/7.1.1.file' 'testfiles/7.1.2.file'
+}
+

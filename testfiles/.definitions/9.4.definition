@@ -1,0 +1,13 @@
+# Details for test 9.4. ($1 will be run_test, explain_test or mark_test)
+function test9.4() {
+    "$1" 9.4 "digit_check04" \
+        "Check uqentropy with --digit-append argument handles single password file with two all-letter passwords with up to 2 appended digits and no matches in candidate passwords" \
+        -timeout 5 \
+        -maxattempts 1 \
+        -stdin "testfiles/9.4.in" \
+        -exit 0 \
+        -stdout testfiles/9.4.stdout \
+        -stderr testfiles/empty \
+        "./uqentropy" '--digit-append' '2' 'testfiles/9.4.file'
+}
+

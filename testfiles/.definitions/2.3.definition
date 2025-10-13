@@ -1,0 +1,11 @@
+# Details for test 2.3. ($1 will be run_test, explain_test or mark_test)
+function test2.3() {
+    "$1" 2.3 "file_errors03" \
+        "Check uqentropy reports file error(s) with argument(s) 'testfiles/invalid.file'" \
+        -timeout 3 \
+        -exit 20 \
+        -stdout testfiles/empty \
+        -stderr testfiles/2.3.stderr \
+        "./uqentropy" 'testfiles/invalid.file'
+}
+
