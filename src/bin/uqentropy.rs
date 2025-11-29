@@ -119,7 +119,9 @@ let mut local_count = 0;
 fn check_password_is_valid(password: &str) -> bool {
     !password.is_empty() && password.chars().all(|c| c.is_ascii_graphic() && !c.is_whitespace())
 }
-
+fn floor_to_one_decimal(x: f64) -> f64 {
+    (x * 10.0).floor() / 10.0
+}
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut filenames = Vec::new();
@@ -197,7 +199,8 @@ fn main() {
         if entropy >= 60.0 {
             countStrong += 1;
         }
-        
+        println!("Password entropy calculated to be {:.1}", floor_to_one_decimal(entropy));
+        println!("Password strength rating: {}", map_to_strength(entropy));
     }
     if countStrong == 0{
             println!("No strong password(s) have been identified");
