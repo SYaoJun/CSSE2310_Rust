@@ -1,11 +1,7 @@
-use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
-
-const MAXSIZE: usize = 128;
-const MAX_NUM: usize = 128;
 
 static mut LEET: bool = false;
 static mut CASE_SENSITIVE: bool = false;
@@ -13,12 +9,10 @@ static mut DIGIT_APPEND: bool = false;
 static mut DOUBLE_CHECK: bool = false;
 static mut NUM_DIGITS: usize = 0;
 static mut PASSWORD_COUNT: usize = 0;
-static mut STRONG_PASSWORD_IDX: usize = 0;
-static mut MATCH_NUMBER: usize = 0;
-static mut CHECKED: bool = false;
 
 // 定义字符串常量
-const USAGE_MSG: &str = "Usage: ./uqentropy [--leet] [--double] [--digit-append 1..8] [--case] [listfilename ...]";
+const USAGE_MSG: &str =
+    "Usage: ./uqentropy [--leet] [--double] [--digit-append 1..8] [--case] [listfilename ...]";
 
 #[derive(Debug)]
 enum ExitCodes {
@@ -50,10 +44,18 @@ fn calculate_entropy(password: &str) -> f64 {
     }
 
     let mut s = 0;
-    if has_digit { s += 10; }
-    if has_lower { s += 26; }
-    if has_upper { s += 26; }
-    if has_symbol { s += 32; }
+    if has_digit {
+        s += 10;
+    }
+    if has_lower {
+        s += 26;
+    }
+    if has_upper {
+        s += 26;
+    }
+    if has_symbol {
+        s += 32;
+    }
 
     password.len() as f64 * log2(s as f64)
 }
@@ -82,26 +84,26 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
         }
         let file = file.unwrap();
         let reader = BufReader::new(file);
-let mut local_count = 0;
-        for line in reader.lines() {
-            if let Ok(l) = line {
-                // 检查line 是否只包含 空格 和 可打印的字符
-                if !check_password_is_valid(&l) {
-                    eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
-                    found_error = true;
-                    break;
-                }
+        let mut local_count = 0;
+        for line in reader.lines().map_while(Result::ok) {
+            // 检查line 是否只包含 空格 和 可打印的字符
+            if !check_password_is_valid(&line) {
+                eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
+                found_error = true;
+                break;
+            }
 
-                for token in l.split_whitespace() {
-                    if !token.is_empty() {
-                        passwords.push(token.to_string());
-                        local_count += 1;
-                        unsafe { PASSWORD_COUNT += 1; }
+            for token in line.split_whitespace() {
+                if !token.is_empty() {
+                    passwords.push(token.to_string());
+                    local_count += 1;
+                    unsafe {
+                        PASSWORD_COUNT += 1;
                     }
                 }
             }
         }
-        if found_error{
+        if found_error {
             continue;
         }
         if local_count == 0 {
@@ -117,7 +119,10 @@ let mut local_count = 0;
 }
 
 fn check_password_is_valid(password: &str) -> bool {
-    !password.is_empty() && password.chars().all(|c| c.is_ascii_graphic() && !c.is_whitespace())
+    !password.is_empty()
+        && password
+            .chars()
+            .all(|c| c.is_ascii_graphic() && !c.is_whitespace())
 }
 fn floor_to_one_decimal(x: f64) -> f64 {
     (x * 10.0).floor() / 10.0
@@ -156,13 +161,12 @@ fn main() {
                     eprintln!("{}", USAGE_MSG);
                     exit(ExitCodes::Usage as i32);
                 }
-                if args[i].starts_with('-'){
+                if args[i].starts_with('-') {
                     eprintln!("{}", USAGE_MSG);
                     exit(ExitCodes::Usage as i32);
                 }
-                for j in i..args.len() {
-                    
-                    filenames.push(args[j].clone());
+                for arg in args.iter().skip(i) {
+                    filenames.push(arg.clone());
                 }
                 break;
             }
@@ -199,13 +203,16 @@ fn main() {
         if entropy >= 60.0 {
             count_strong += 1;
         }
-        println!("Password entropy calculated to be {:.1}", floor_to_one_decimal(entropy));
+        println!(
+            "Password entropy calculated to be {:.1}",
+            floor_to_one_decimal(entropy)
+        );
         println!("Password strength rating: {}", map_to_strength(entropy));
     }
-    if count_strong == 0{
-            println!("No strong password(s) have been identified");
-            exit(ExitCodes::NoStrong as i32)
-        }else{
-            exit(0);
-        }
+    if count_strong == 0 {
+        println!("No strong password(s) have been identified");
+        exit(ExitCodes::NoStrong as i32)
+    } else {
+        exit(0);
+    }
 }
