@@ -183,6 +183,8 @@ fn main() {
     std::io::stdout().flush().unwrap();
     // 遍历每个filenames 并打开文件
     let stdin = io::stdin();
+    let mut countStrong = 0;
+    // 会在 EOF 时自动退出循环
     for line in stdin.lock().lines() {
         let mut password = line.unwrap();
         password = password.trim_end().to_string();
@@ -192,7 +194,15 @@ fn main() {
             continue;
         }
         let mut entropy = calculate_entropy(&password);
-        println!("Password entropy calculated to be {:.1}", entropy);
-        println!("Password strength rating: {}", map_to_strength(entropy));
+        if entropy >= 60.0 {
+            countStrong += 1;
+        }
+        
     }
+    if countStrong == 0{
+            println!("No strong password(s) have been identified");
+            exit(14)
+        }else{
+            exit(0);
+        }
 }
