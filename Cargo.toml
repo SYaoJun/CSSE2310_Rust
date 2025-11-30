@@ -6,3 +6,8 @@ edition = "2021"
 [[bin]]
 name = "uqentropy"
 path = "src/bin/uqentropy.rs"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.9"
+chrono = { version = "0.4", features = ["serde"] }

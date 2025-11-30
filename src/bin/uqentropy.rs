@@ -2,8 +2,10 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
-use std::sync::Mutex;
-use std::fs::OpenOptions;
+use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
+use log;
+use env_logger;
 
 static mut LEET: bool = false;
 static mut CASE_SENSITIVE: bool = false;
@@ -11,23 +13,6 @@ static mut DIGIT_APPEND: bool = false;
 static mut DOUBLE_CHECK: bool = false;
 static mut NUM_DIGITS: usize = 0;
 static mut PASSWORD_COUNT: usize = 0;
-
-static LOG_FILE: Mutex<&str> = Mutex::new("uqentropy.log");
-
-struct Logger;
-
-impl Logger {
-    fn write(message: &str) {
-        if let Ok(log_filename) = LOG_FILE.lock() {
-            if let Ok(mut file) = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(*log_filename) {
-                writeln!(file, "{}", message).ok();
-            }
-        }
-    }
-}
 
 // 定义字符串常量
 const USAGE_MSG: &str =
@@ -44,8 +29,36 @@ fn log2(x: f64) -> f64 {
     x.log2()
 }
 
-fn write_log(message: &str) {
-    Logger::write(message);
+/// 初始化日志系统，创建带时间戳的日志文件
+fn init_logging() {
+    // 创建log目录（如果不存在）
+    fs::create_dir_all("log").expect("无法创建log目录");
+    
+    let the_time = chrono::Local::now()
+        .format("%Y_%m_%d_%H:%M:%S")
+        .to_string();
+
+
+    // 构造日志文件路径
+    let log_file_path = format!("log/uqentropy_{}.log", the_time);
+    
+    // 设置环境变量以配置env_logger
+    std::env::set_var("RUST_LOG", "info");
+    
+    // 初始化env_logger并设置输出到文件
+    let log_file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&log_file_path)
+        .expect("无法创建日志文件");
+    
+    env_logger::builder()
+        .target(env_logger::Target::Pipe(Box::new(log_file)))
+        .format_timestamp_secs()
+        .init();
+    
+    log::info!("日志系统已初始化，日志文件: {}", log_file_path);
 }
 
 fn calculate_entropy(password: &str) -> f64 {
@@ -106,7 +119,7 @@ fn check_password_is_valid(password: &str) -> bool {
 fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
     let mut error_occured = false;
     // 打印文件数量
-    write_log(&format!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"}));
+    log::info!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
     for fname in filenames {
         let file = match File::open(fname) {
             Ok(file) => file,
@@ -319,6 +332,9 @@ fn calculate_entropy_two(password: &str, passwords: &[String]) -> f64 {
     f64::MAX
 }
 fn main() {
+    // 初始化日志系统
+    init_logging();
+    
     let args: Vec<String> = env::args().collect();
     let mut filenames = Vec::new();
 
