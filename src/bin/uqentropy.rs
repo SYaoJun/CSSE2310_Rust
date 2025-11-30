@@ -223,8 +223,9 @@ fn leet_transform(password: &str) -> String {
     result
 }
 
-fn do_basic_match(password: &str, passwords: &[String]) -> Option<f64> { 
+fn do_basic_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> { 
     for (i, pwd) in passwords.iter().enumerate() {
+        *password_scale += 1;
         if pwd == password {
             println!("Candidate password would be matched on guess number {}", i + 1);
             std::io::stdout().flush().unwrap();
@@ -237,12 +238,13 @@ fn do_basic_match(password: &str, passwords: &[String]) -> Option<f64> {
 fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) -> f64 {
     // 遍历所有密码
     log::info!("passwords size = {}", passwords.len());
-    if let Some(entropy) = do_basic_match(password, passwords) {
+    let mut password_scale = 0;
+    if let Some(entropy) = do_basic_match(password, passwords, &mut password_scale) {
         return entropy;
     }
     
     // 检查基本密码匹配
-    if let Some(entropy) = check_case_match(password, passwords, config) {
+    if let Some(entropy) = check_case_match(password, passwords, config, &mut password_scale) {
         return entropy;
     }
     
@@ -268,15 +270,27 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     }
     
     // If no match found, return a large value
-    println!("No match would be found after checking {} passwords", passwords.len());
+    println!("No match would be found after checking {} passwords", password_scale);
     std::io::stdout().flush().unwrap();
     f64::MAX
 }
 
-fn check_case_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
+fn get_letter_count(password: &str) -> i32 {
+    let mut count = 0;
+    for c in password.chars() {
+        if c.is_alphabetic() {
+            count += 1;
+        }
+    }
+    count
+}
+fn check_case_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
     if config.case_sensitive {
         // 大小写敏感模式：只进行精确匹配
         for (i, pwd) in passwords.iter().enumerate() {
+            // TODO: Implement letter count logic
+        let letter_count = get_letter_count(pwd);
+        *password_scale += (2_i32.pow(letter_count as u32)) - 1;
             if pwd == password {
                 println!("Candidate password would be matched on guess number {}", i + 1);
                 std::io::stdout().flush().unwrap();
