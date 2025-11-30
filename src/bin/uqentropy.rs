@@ -81,12 +81,16 @@ fn check_password_is_valid(password: &str) -> bool {
 }
 
 fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
+    let mut error_occured = false;
+    // 打印文件数量
+    //println!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
     for fname in filenames {
         let file = match File::open(fname) {
             Ok(file) => file,
             Err(_) => {
                 eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
-                exit(ExitCodes::InvalidFile as i32);
+                error_occured = true;
+                continue;
             }
         };
         
@@ -100,7 +104,7 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
                     for c in line.chars() {
                         if !c.is_ascii() || (c.is_ascii() && !c.is_ascii_graphic() && !c.is_ascii_whitespace()) {
                             eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
-                            exit(ExitCodes::InvalidFile as i32);
+                            error_occured = true;
                         }
                     }
                     
@@ -117,7 +121,7 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
                 },
                 Err(_) => {
                     eprintln!("uqentropy: error reading file \"{}\"", fname);
-                    exit(ExitCodes::InvalidFile as i32);
+                    error_occured = true;
                 }
             }
         }
@@ -125,8 +129,11 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
         if !has_valid_password {
             eprintln!("uqentropy: \"{}\" does not contain any passwords", fname);
             std::io::stderr().flush().unwrap();
-            exit(ExitCodes::InvalidFile as i32);
+            error_occured = true;
         }
+    }
+    if error_occured {
+        exit(ExitCodes::InvalidFile as i32);
     }
 }
 fn floor_to_one_decimal(x: f64) -> f64 {
@@ -352,7 +359,7 @@ fn main() {
     }
 
     println!("Welcome to UQEntropy!");
-    println!("Written by s4905773.");
+    println!("Written by @yaojun.");
     println!("Enter candidate passwords to check their strength.");
     // flush
     std::io::stdout().flush().unwrap();
