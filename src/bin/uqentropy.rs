@@ -335,20 +335,22 @@ fn check_leet_match(password: &str, passwords: &[String], config: &Config, passw
 fn check_digit_append_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
     let power_table = [10, 100, 1000, 10000, 100000, 1000000, 10000000];
     
-    // for (_i, pwd) in passwords.iter().enumerate() {
-    // //    let  last_char = pwd[pwd.len() - 1];
-    // //    if last_char.is_ascii_digit() {
-    // //        for j in 0..config.num_digits {
-    //         //    let new_pwd = append_digit(pwd, power_table[j]);
-    //         //    let new_pwd = format!("{}{}", pwd, digit_append);
-    //         //    *password_scale += 1;
-    //         //    if new_pwd == password {
-    //         //        println!("Candidate password would be matched on guess number {}", *password_scale);
-    //         //    }
-    //        }
-    // //    }
-
-    // }
+    for (_i, pwd) in passwords.iter().enumerate() {
+       let  last_char = pwd.chars().last()?;
+       if !last_char.is_ascii_digit() {
+           for j in 0..config.num_digits {
+             for value in 0..power_table[j] {
+                 let digit_append = format!("{:0width$}", value, width=j+1);
+                 let new_pwd = format!("{}{}", pwd, digit_append);
+                 *password_scale += 1;
+                 if new_pwd == password {
+                     println!("Candidate password would be matched on guess number {}", *password_scale);
+                     return Some(log2(2.0 * (*password_scale as f64)));
+                 }
+               }
+           }
+       }
+    }
     None
 }
 
