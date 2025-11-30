@@ -289,38 +289,54 @@ fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut 
     
     None
 }
-fn dfs(candidate: &str, leet_map: HashMap<&str, &str>, password: &str, start: i32, end: i32)->bool{
+fn dfs(candidate: &str, leet_map: &HashMap<char, &str>, password: &mut [char], index: usize) -> bool {
+    if index == password.len() {
+        return password.iter().collect::<String>() == candidate;
+    }
+
+    let current_char = password[index];
     
+    if let Some(replacements) = leet_map.get(&current_char) {
+        for leet_char in replacements.chars() {
+            let original = password[index];
+            password[index] = leet_char;
+            
+            if dfs(candidate, leet_map, password, index + 1) {
+                return true;
+            }
+            
+            password[index] = original;
+        }
+    }
 
-
-
-    return false;
+    dfs(candidate, leet_map, password, index + 1)
 }
+
 fn check_leet_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
     // hashmap
     let leet_map = HashMap::from([
-        ("a", "4@"),
-        ("b", "68"),
-        ("e", "3"),
-        ("g", "69"),
-        ("i", "1!"),
-        ("l", "1"),
-        ("o", "0"),
-        ("s", "5$"),
-        ("t", "7+"),
-        ("x", "%"),
-        ("z", "2"),
-        ("A", "4@"),
-        ("B", "68"),
-        ("E", "3"),
-        ("G", "69"),
-        ("I", "1!"),
-        ("L", "1"),
-        ("O", "0"),
-        ("S", "5$"),
-        ("T", "7+"),
-        ("X", "%"),
-        ("Z", "2"),
+        ('a', "4@"),
+        ('b', "68"),
+        ('e', "3"),
+        ('g', "69"),
+        ('i', "1!"),
+        ('l', "1"),
+        ('o', "0"),
+        ('s', "5$"),
+        ('t', "7+"),
+        ('x', "%"),
+        ('z', "2"),
+        ('A', "4@"),
+        ('B', "68"),
+        ('E', "3"),
+        ('G', "69"),
+        ('I', "1!"),
+        ('L', "1"),
+        ('O', "0"),
+        ('S', "5$"),
+        ('T', "7+"),
+        ('X', "%"),
+        ('Z', "2"),
     ]);
     
     for (_i, pwd) in passwords.iter().enumerate() {
@@ -329,7 +345,7 @@ fn check_leet_match(password: &str, passwords: &[String], config: &Config, passw
         let len = pwd.len();
         for i in 0..len {
             let c = pwd.chars().nth(i)?;
-            if let Some(value) = leet_map.get(&c.to_string()) {
+            if let Some(value) = leet_map.get(&c) {
                 if value.len() == 1 {
                     power_one += 1;
                 } else {
@@ -344,7 +360,7 @@ fn check_leet_match(password: &str, passwords: &[String], config: &Config, passw
         if len != password.len() {
             continue;
         }
-        if dfs(pwd, leet_map, password, 0, len as i32) {
+        if dfs(pwd, leet_map, password, 0) {
             println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
             return Some(log2(2.0 * (*password_scale as f64)));
