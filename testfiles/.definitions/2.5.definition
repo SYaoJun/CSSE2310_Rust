@@ -1,11 +1,11 @@
 # Details for test 2.5. ($1 will be run_test, explain_test or mark_test)
 function test2.5() {
     "$1" 2.5 "file_errors05" \
-        "Check uqentropy reports file error(s) with argument(s) '/usr/share/dict/words /non/existent/file'" \
+        "Check uqentropy reports file error(s) with argument(s) './testfiles/words /non/existent/file'" \
         -timeout 3 \
         -exit 20 \
         -stdout testfiles/empty \
         -stderr testfiles/2.5.stderr \
-        "./uqentropy" '/usr/share/dict/words' '/non/existent/file'
+        "./uqentropy" './testfiles/words' '/non/existent/file'
 }
 

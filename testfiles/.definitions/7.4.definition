@@ -8,6 +8,6 @@ function test7.4() {
         -exit 14 \
         -stdout testfiles/7.4.stdout \
         -stderr testfiles/empty \
-        "./uqentropy" 'testfiles/top25.passwords' '/usr/share/dict/words'
+        "./uqentropy" 'testfiles/top25.passwords' './testfiles/words'
 }
 

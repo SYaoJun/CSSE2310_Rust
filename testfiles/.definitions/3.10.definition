@@ -1,7 +1,7 @@
 # Details for test 3.10. ($1 will be run_test, explain_test or mark_test)
 function test3.10() {
     "$1" 3.10 "welcome_message10" \
-        "Check welcome message is printed with argument(s) '/usr/share/dict/words testfiles/top1000000.txt'" \
+        "Check welcome message is printed with argument(s) './testfiles/words testfiles/top1000000.txt'" \
         -timeout 3 \
         -stdin "/dev/null" \
         -stdout testfiles/3.10.stdout \
