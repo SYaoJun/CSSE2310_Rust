@@ -271,7 +271,7 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     
     // --double-check
     if config.double_check {
-        if let Some(entropy) = check_double_match(password, passwords, config, &mut password_scale) {
+        if let Some(entropy) = check_double_match(password, passwords,  &mut password_scale) {
             return entropy;
         }
     }
@@ -354,10 +354,10 @@ fn check_digit_append_match(password: &str, passwords: &[String], config: &Confi
     None
 }
 
-fn check_double_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+fn check_double_match(password: &str, passwords: &[String],  password_scale: &mut i32) -> Option<f64> {
     for (_i, first) in passwords.iter().enumerate() {
          let len1 = first.len();
-         if(len1 > password.len() || !password.starts_with(first)){
+         if len1 > password.len() || !password.starts_with(first) {
             *password_scale += passwords.len() as i32;
             continue;
          }
