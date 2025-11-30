@@ -289,78 +289,84 @@ fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut 
     
     None
 }
-fn dfs(candidate: &str, leet_map: &HashMap<char, &str>, password: &mut [char], index: usize) -> bool {
-    if index == password.len() {
-        return password.iter().collect::<String>() == candidate;
+fn dfs(password: &str, leet_map: &HashMap<char, &str>, pwd_chars: &mut [char], index: usize) -> bool {
+    if index == pwd_chars.len() {
+        // 打印当前的字符串pwd_chars
+        log::info!("transformed pwd: {}, target password: {}", pwd_chars.iter().collect::<String>(), password);
+        return pwd_chars.iter().collect::<String>() == password;
     }
 
-    let current_char = password[index];
+    let current_char = pwd_chars[index];
     
     if let Some(replacements) = leet_map.get(&current_char) {
         for leet_char in replacements.chars() {
-            let original = password[index];
-            password[index] = leet_char;
+            let original = pwd_chars[index];
+            pwd_chars[index] = leet_char;
             
-            if dfs(candidate, leet_map, password, index + 1) {
+            if dfs(password, leet_map, pwd_chars, index + 1) {
                 return true;
             }
             
-            password[index] = original;
+            pwd_chars[index] = original;
         }
     }
 
-    dfs(candidate, leet_map, password, index + 1)
+    // 保持原始字符不变，继续搜索
+    if dfs(password, leet_map, pwd_chars, index + 1) {
+        return true;
+    }
+    return false;
 }
 
-fn check_leet_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
-    // hashmap
-    let leet_map = HashMap::from([
-        ('a', "4@"),
-        ('b', "68"),
-        ('e', "3"),
-        ('g', "69"),
-        ('i', "1!"),
-        ('l', "1"),
-        ('o', "0"),
-        ('s', "5$"),
-        ('t', "7+"),
-        ('x', "%"),
-        ('z', "2"),
-        ('A', "4@"),
-        ('B', "68"),
-        ('E', "3"),
-        ('G', "69"),
-        ('I', "1!"),
-        ('L', "1"),
-        ('O', "0"),
-        ('S', "5$"),
-        ('T', "7+"),
-        ('X', "%"),
-        ('Z', "2"),
+fn check_leet_match(password: &str, passwords: &[String], _config: &Config, password_scale: &mut i32) -> Option<f64> {
+    // 修复：使用正确的 HashMap 构造方式，移除重复键
+    let leet_map: HashMap<char, &str> = HashMap::from([
+        ('a', "4@"), ('b', "68"), ('e', "3"), ('g', "69"), 
+        ('i', "1!"), ('l', "1"), ('o', "0"), ('s', "5$"), 
+        ('t', "7+"), ('x', "%"), ('z', "2"), 
+        // 移除了大写字母的重复映射，因为 chars() 是大小写敏感的
+        ('A', "4@"), ('B', "68"), ('E', "3"), ('G', "69"), 
+        ('I', "1!"), ('L', "1"), ('O', "0"), ('S', "5$"), 
+        ('T', "7+"), ('X', "%"), ('Z', "2"),
     ]);
     
-    for (_i, pwd) in passwords.iter().enumerate() {
+    for pwd in passwords {
         let mut power_one = 0;
         let mut power_two = 0;
         let len = pwd.len();
-        for i in 0..len {
-            let c = pwd.chars().nth(i)?;
+        
+        // 修复：使用更安全的方式遍历字符
+        for c in pwd.chars() {
             if let Some(value) = leet_map.get(&c) {
-                if value.len() == 1 {
-                    power_one += 1;
-                } else {
-                    power_two += 1;
+                match value.len() {
+                    1 => power_one += 1,
+                    _ => power_two += 1,
                 }
             }
         }
-        if power_one + power_two == 0{
+        
+        if power_one + power_two == 0 {
             continue;
         }
-        *password_scale += 2_i32.pow(power_one as u32) * 3_i32.pow(power_two as u32) -1;
+        
+        // 修复：避免整数溢出，使用 checked_pow
+        let scale_increment = 2_i32.checked_pow(power_one as u32)
+            .and_then(|x| x.checked_mul(3_i32.checked_pow(power_two as u32)?))
+            .and_then(|x| x.checked_sub(1))
+            .unwrap_or(i32::MAX); // 处理溢出情况
+        
+        *password_scale = password_scale.saturating_add(scale_increment);
+        log::info!("current scale: {}, pwd: {}", *password_scale, pwd);
         if len != password.len() {
             continue;
         }
-        if dfs(pwd, leet_map, password, 0) {
+        
+        // 将字典密码转换为可变的char数组，以便进行leet变换
+        let mut pwd_chars: Vec<char> = pwd.chars().collect();
+        log::info!("dict pwd: {}", pwd);
+        
+        // 调用dfs函数，将字典密码进行leet变换，然后与目标密码比较
+        if dfs(password, &leet_map, &mut pwd_chars, 0) {
             println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
             return Some(log2(2.0 * (*password_scale as f64)));
