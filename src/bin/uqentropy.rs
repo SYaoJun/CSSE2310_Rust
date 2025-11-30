@@ -149,12 +149,14 @@ fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Confi
     
     let reader = BufReader::new(file);
     let mut has_valid_password = false;
-    
+    let mut invalid_lines = 0;
     for line_result in reader.lines() {
         match line_result {
             Ok(line) => {
                 if process_line(&line, passwords, fname) {
                     has_valid_password = true;
+                }else{
+                    invalid_lines += 1;
                 }
             },
             Err(_) => {
@@ -169,6 +171,9 @@ fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Confi
         std::io::stderr().flush().unwrap();
         return Err(());
     }
+    if invalid_lines > 0 {
+        return Err(());
+    }
     Ok(())
 }
 
@@ -178,7 +183,7 @@ fn process_line(line: &str, passwords: &mut Vec<String>, fname: &str) -> bool {
         if !c.is_ascii() || (c.is_ascii() && !c.is_ascii_graphic() && !c.is_ascii_whitespace()) {
             log::debug!("Invalid character '{}' found in line: {}", c, line);
             eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
-            break; // 只报告第一个无效字符
+            return false;
         }
     }
     
