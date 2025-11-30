@@ -2,6 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
+use std::sync::Mutex;
+use std::fs::OpenOptions;
 
 static mut LEET: bool = false;
 static mut CASE_SENSITIVE: bool = false;
@@ -9,6 +11,23 @@ static mut DIGIT_APPEND: bool = false;
 static mut DOUBLE_CHECK: bool = false;
 static mut NUM_DIGITS: usize = 0;
 static mut PASSWORD_COUNT: usize = 0;
+
+static LOG_FILE: Mutex<&str> = Mutex::new("uqentropy.log");
+
+struct Logger;
+
+impl Logger {
+    fn write(message: &str) {
+        if let Ok(log_filename) = LOG_FILE.lock() {
+            if let Ok(mut file) = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(*log_filename) {
+                writeln!(file, "{}", message).ok();
+            }
+        }
+    }
+}
 
 // 定义字符串常量
 const USAGE_MSG: &str =
@@ -23,6 +42,10 @@ enum ExitCodes {
 
 fn log2(x: f64) -> f64 {
     x.log2()
+}
+
+fn write_log(message: &str) {
+    Logger::write(message);
 }
 
 fn calculate_entropy(password: &str) -> f64 {
@@ -83,7 +106,7 @@ fn check_password_is_valid(password: &str) -> bool {
 fn read_file(filenames: &[String], passwords: &mut Vec<String>) {
     let mut error_occured = false;
     // 打印文件数量
-    //println!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
+    write_log(&format!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"}));
     for fname in filenames {
         let file = match File::open(fname) {
             Ok(file) => file,
@@ -158,11 +181,8 @@ fn leet_transform(password: &str) -> String {
 }
 
 fn calculate_entropy_two(password: &str, passwords: &[String]) -> f64 {
-    let mut checked_passwords = 0;
-    
     // 遍历所有密码
     for (i, pwd) in passwords.iter().enumerate() {
-        checked_passwords += 1;
         
         // 检查基本密码匹配
         unsafe {
