@@ -256,7 +256,7 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     
     // --case
     if config.case_sensitive {
-        if let Some(entropy) = check_case_match(password, passwords, config, &mut password_scale) {
+        if let Some(entropy) = check_case_match(password, passwords,  &mut password_scale) {
             return entropy;
         }
     }
@@ -290,7 +290,7 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
 }
 
 
-fn check_case_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut i32) -> Option<f64> {
     
         for (_i, pwd) in passwords.iter().enumerate() {
             let letter_count = get_letter_count(pwd);
@@ -355,40 +355,26 @@ fn check_digit_append_match(password: &str, passwords: &[String], config: &Confi
 }
 
 fn check_double_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
-    for (_i, pwd) in passwords.iter().enumerate() {
-        // 检查密码是否是基础密码重复两次
-        let double_pwd = format!("{}{}", pwd, pwd);
-        *password_scale += 1;
-        if &double_pwd == password {
-            println!("Candidate password would be matched on guess number {}", *password_scale);
-            std::io::stdout().flush().unwrap();
-            return Some(log2(2.0 * (*password_scale as f64)));
-        }
-        
-        // 检查基础密码是否是密码的一半（如果密码长度是偶数）
-        if password.len() % 2 == 0 {
-            let half_length = password.len() / 2;
-            let (first_half, second_half) = password.split_at(half_length);
+    for (_i, first) in passwords.iter().enumerate() {
+         let len1 = first.len();
+         if(len1 > password.len() || !password.starts_with(first)){
+            *password_scale += passwords.len() as i32;
+            continue;
+         }
+       for (_j, second) in passwords.iter().enumerate(){
+             *password_scale += 1;
             
-            if first_half == second_half {
-                if config.case_sensitive {
-                    if pwd == first_half {
-                        println!("Candidate password would be matched on guess number {}", *password_scale);
-                        std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (*password_scale as f64)));
-                    }
-                } else {
-                    if pwd.to_lowercase() == first_half.to_lowercase() {
-                        println!("Candidate password would be matched on guess number {}", *password_scale);
-                        std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (*password_scale as f64)));
-                    }
-                }
-            }
-        }
-        
-        // 增加其他密码组合的尝试次数
-        *password_scale += passwords.len() as i32;
+             let len2 = second.len();
+             if len1 + len2 != password.len() {
+                 continue;
+             }
+             let new_pwd = format!("{}{}", first, second);
+             if new_pwd == password {
+                 println!("Candidate password would be matched on guess number {}", *password_scale);
+                 return Some(log2(2.0 * (*password_scale as f64)));
+             }
+         
+       }
     }
     None
 }
