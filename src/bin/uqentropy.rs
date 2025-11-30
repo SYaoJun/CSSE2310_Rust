@@ -150,10 +150,12 @@ fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Confi
     let reader = BufReader::new(file);
     let mut has_valid_password = false;
     let mut invalid_lines = 0;
+    let mut total_lines = 0;
     for line_result in reader.lines() {
+        total_lines += 1;
         match line_result {
             Ok(line) => {
-                if process_line(&line, passwords, fname) {
+                if process_line(&line.trim(), passwords, fname) {
                     has_valid_password = true;
                 }else{
                     invalid_lines += 1;
@@ -165,7 +167,7 @@ fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Confi
             }
         }
     }
-    
+    log::info!("total lines: {}", total_lines);
     if !has_valid_password {
         eprintln!("uqentropy: \"{}\" does not contain any passwords", fname);
         std::io::stderr().flush().unwrap();
@@ -194,7 +196,7 @@ fn process_line(line: &str, passwords: &mut Vec<String>, fname: &str) -> bool {
             passwords.push(token.to_string());
             has_valid_password = true;
         } else if !token.is_empty() {
-            log::debug!("Filtered out token: '{}' from line: '{}'", token, line);
+            log::info!("Filtered out token: '{}' from line: '{}'", token, line);
         }
     }
     has_valid_password

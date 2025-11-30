@@ -8,6 +8,6 @@ function test6.4() {
         -exit 14 \
         -stdout testfiles/6.4.stdout \
         -stderr testfiles/empty \
-        "./uqentropy" '/usr/share/dict/words'
+        "./uqentropy" './testfiles/words'
 }
 
