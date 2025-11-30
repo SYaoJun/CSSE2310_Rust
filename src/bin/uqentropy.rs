@@ -223,6 +223,17 @@ fn leet_transform(password: &str) -> String {
     result
 }
 
+/// 计算字符串中字母的数量
+fn get_letter_count(s: &str) -> i32 {
+    let mut count = 0;
+    for c in s.chars() {
+        if c.is_ascii_alphabetic() {
+            count += 1;
+        }
+    }
+    count
+}
+
 fn do_basic_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> { 
     for (i, pwd) in passwords.iter().enumerate() {
         *password_scale += 1;
@@ -243,28 +254,31 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
         return entropy;
     }
     
-    // 检查基本密码匹配
-    if let Some(entropy) = check_case_match(password, passwords, config, &mut password_scale) {
-        return entropy;
-    }
-    
-    // 检查Leet转换匹配
-    if config.leet {
-        if let Some(entropy) = check_leet_match(password, passwords, config) {
+    // --case
+    if config.case_sensitive {
+        if let Some(entropy) = check_case_match(password, passwords, config, &mut password_scale) {
             return entropy;
         }
     }
     
-    // 检查数字追加匹配
+    
+    // --digit-append
     if config.digit_append {
-        if let Some(entropy) = check_digit_append_match(password, passwords, config) {
+        if let Some(entropy) = check_digit_append_match(password, passwords, config, &mut password_scale) {
             return entropy;
         }
     }
     
-    // 检查重复密码匹配
+    // --double-check
     if config.double_check {
-        if let Some(entropy) = check_double_match(password, passwords, config) {
+        if let Some(entropy) = check_double_match(password, passwords, config, &mut password_scale) {
+            return entropy;
+        }
+    }
+
+    // --leet
+    if config.leet {
+        if let Some(entropy) = check_leet_match(password, passwords, config, &mut password_scale) {
             return entropy;
         }
     }
@@ -275,129 +289,78 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     f64::MAX
 }
 
-fn get_letter_count(password: &str) -> i32 {
-    let mut count = 0;
-    for c in password.chars() {
-        if c.is_alphabetic() {
-            count += 1;
-        }
-    }
-    count
-}
+
 fn check_case_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
-    if config.case_sensitive {
-        // 大小写敏感模式：只进行精确匹配
-        for (i, pwd) in passwords.iter().enumerate() {
-            // TODO: Implement letter count logic
-        let letter_count = get_letter_count(pwd);
-        *password_scale += (2_i32.pow(letter_count as u32)) - 1;
+    
+        for (_i, pwd) in passwords.iter().enumerate() {
+            let letter_count = get_letter_count(pwd);
+            *password_scale += 2_i32.pow(letter_count as u32) - 1;
             if pwd == password {
-                println!("Candidate password would be matched on guess number {}", i + 1);
+                println!("Candidate password would be matched on guess number {}", *password_scale);
                 std::io::stdout().flush().unwrap();
-                return Some(log2(2.0 * (i + 1) as f64));
+                return Some(log2(2.0 * (*password_scale as f64)));
             }
         }
-    } else {
-        // 大小写不敏感模式：先尝试精确匹配，再尝试大小写不敏感匹配
-        for (i, pwd) in passwords.iter().enumerate() {
-            if pwd == password || pwd.to_lowercase() == password.to_lowercase() {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return Some(log2(2.0 * (i + 1) as f64));
-            }
-        }
-    }
+    
     None
 }
 
-fn check_leet_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
-    for (i, pwd) in passwords.iter().enumerate() {
+fn check_leet_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+    for (_i, pwd) in passwords.iter().enumerate() {
+        // 计算Leet变换的数量
+        // 这里我们简化处理，实际应该计算所有可能的Leet变换组合
+        let letter_count = get_letter_count(pwd);
+        let leet_combinations = 2_i32.pow(letter_count as u32) - 1;
+        *password_scale += leet_combinations;
+        
         // 检查密码是否是基础密码的Leet转换
         let leet_pwd = leet_transform(pwd);
         if leet_pwd == password {
-            println!("Candidate password would be matched on guess number {}", i + 1);
+            println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
-            return Some(log2(2.0 * (i + 1) as f64));
+            return Some(log2(2.0 * (*password_scale as f64)));
         }
         
         // 检查基础密码是否是密码的Leet转换
         let leet_input = leet_transform(password);
         if pwd == &leet_input || (!config.case_sensitive && pwd.to_lowercase() == leet_input.to_lowercase()) {
-            println!("Candidate password would be matched on guess number {}", i + 1);
+            println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
-            return Some(log2(2.0 * (i + 1) as f64));
+            return Some(log2(2.0 * (*password_scale as f64)));
         }
     }
     None
 }
 
-fn check_digit_append_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
-    for (i, pwd) in passwords.iter().enumerate() {
-        // 特殊处理digit_check03测试用例
-        if !config.case_sensitive && password.len() > config.num_digits {
-            let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
-            if digits_part.chars().all(|c| c.is_ascii_digit()) {
-                let digit_value = digits_part.parse::<usize>().unwrap_or(0);
-                if pwd.to_lowercase() == base_part.to_lowercase() {
-                    println!("Candidate password would be matched on guess number {}", i + 1 + digit_value);
-                    std::io::stdout().flush().unwrap();
-                    return Some(log2(2.0 * (i + 1 + digit_value) as f64));
-                }
-            }
-        }
-        
-        // 检查基础密码是否是密码去掉数字后的部分（标准情况）
-        if password.len() > config.num_digits {
-            let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
-            if digits_part.chars().all(|c| c.is_ascii_digit()) {
-                if config.case_sensitive {
-                    if pwd == base_part {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
-                        std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (i + 1) as f64));
-                    }
-                } else {
-                    // 确保大小写不敏感匹配也能正确工作
-                    if pwd.to_lowercase() == base_part.to_lowercase() {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
-                        std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (i + 1) as f64));
-                    }
-                }
-            }
-        }
-        
-        // 检查密码是否是基础密码加上数字
-        for digit in 0..10_usize.pow(config.num_digits as u32) {
-            let digit_str = format!("{:0width$}", digit, width = config.num_digits);
-            let extended = format!("{}{}", pwd, digit_str);
-            
-            if config.case_sensitive {
-                if &extended == password {
-                    println!("Candidate password would be matched on guess number {}", i + 1);
-                    std::io::stdout().flush().unwrap();
-                    return Some(log2(2.0 * (i + 1) as f64));
-                }
-            } else {
-                if extended.to_lowercase() == password.to_lowercase() {
-                    println!("Candidate password would be matched on guess number {}", i + 1);
-                    std::io::stdout().flush().unwrap();
-                    return Some(log2(2.0 * (i + 1) as f64));
-                }
-            }
-        }
-    }
+fn check_digit_append_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+    let power_table = [10, 100, 1000, 10000, 100000, 1000000, 10000000];
+    
+    // for (_i, pwd) in passwords.iter().enumerate() {
+    // //    let  last_char = pwd[pwd.len() - 1];
+    // //    if last_char.is_ascii_digit() {
+    // //        for j in 0..config.num_digits {
+    //         //    let new_pwd = append_digit(pwd, power_table[j]);
+    //         //    let new_pwd = format!("{}{}", pwd, digit_append);
+    //         //    *password_scale += 1;
+    //         //    if new_pwd == password {
+    //         //        println!("Candidate password would be matched on guess number {}", *password_scale);
+    //         //    }
+    //        }
+    // //    }
+
+    // }
     None
 }
 
-fn check_double_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
-    for (i, pwd) in passwords.iter().enumerate() {
+fn check_double_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+    for (_i, pwd) in passwords.iter().enumerate() {
         // 检查密码是否是基础密码重复两次
         let double_pwd = format!("{}{}", pwd, pwd);
+        *password_scale += 1;
         if &double_pwd == password {
-            println!("Candidate password would be matched on guess number {}", i + 1);
+            println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
-            return Some(log2(2.0 * (i + 1) as f64));
+            return Some(log2(2.0 * (*password_scale as f64)));
         }
         
         // 检查基础密码是否是密码的一半（如果密码长度是偶数）
@@ -408,19 +371,22 @@ fn check_double_match(password: &str, passwords: &[String], config: &Config) -> 
             if first_half == second_half {
                 if config.case_sensitive {
                     if pwd == first_half {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        println!("Candidate password would be matched on guess number {}", *password_scale);
                         std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (i + 1) as f64));
+                        return Some(log2(2.0 * (*password_scale as f64)));
                     }
                 } else {
                     if pwd.to_lowercase() == first_half.to_lowercase() {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        println!("Candidate password would be matched on guess number {}", *password_scale);
                         std::io::stdout().flush().unwrap();
-                        return Some(log2(2.0 * (i + 1) as f64));
+                        return Some(log2(2.0 * (*password_scale as f64)));
                     }
                 }
             }
         }
+        
+        // 增加其他密码组合的尝试次数
+        *password_scale += passwords.len() as i32;
     }
     None
 }
@@ -539,12 +505,7 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
             }
         }
     }
-    
-    // 特殊处理digit_check03测试用例，确保它返回退出码0
-    // 当使用--digit-append选项时，根据测试要求返回0退出码
-    if config.digit_append {
-        exit(0);
-    } else if count_strong == 0 {
+    if count_strong == 0 {
         println!("No strong password(s) have been identified");
         std::io::stdout().flush().unwrap();
         exit(ExitCodes::NoStrong as i32)
