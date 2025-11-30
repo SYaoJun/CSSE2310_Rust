@@ -130,15 +130,15 @@ fn check_password_is_valid(password: &str) -> bool {
 }
 #[warn(clippy::too_many_lines)]
 fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config) {
-    let mut error_occured = false;
+    let mut error_occurred = false;
     // 打印文件数量
     log::info!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
     for fname in filenames {
         if let Err(_) = read_single_file(fname, passwords, config) {
-            error_occured = true;
+            error_occurred = true;
         }
     }
-    if error_occured {
+    if error_occurred {
         exit(ExitCodes::InvalidFile as i32);
     }
 }
@@ -280,7 +280,7 @@ fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut 
         for (_i, pwd) in passwords.iter().enumerate() {
             let letter_count = get_letter_count(pwd);
             *password_scale += 2_i32.pow(letter_count as u32) - 1;
-            if pwd == password {
+            if pwd.to_uppercase() == password.to_uppercase() {
                 println!("Candidate password would be matched on guess number {}", *password_scale);
                 std::io::stdout().flush().unwrap();
                 return Some(log2(2.0 * (*password_scale as f64)));
