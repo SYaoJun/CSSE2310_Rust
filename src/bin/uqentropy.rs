@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
@@ -205,23 +206,7 @@ fn process_line(line: &str, passwords: &mut Vec<String>, fname: &str) -> bool {
 fn floor_to_one_decimal(x: f64) -> f64 {
     (x * 10.0).floor() / 10.0
 }
-fn leet_transform(password: &str) -> String {
-    let mut result = String::new();
-    for c in password.chars() {
-        match c {
-            'a' | 'A' => result.push('4'),
-            'e' | 'E' => result.push('3'),
-            'i' | 'I' => result.push('1'),
-            'o' | 'O' => result.push('0'),
-            's' | 'S' => result.push('5'),
-            't' | 'T' => result.push('7'),
-            'b' | 'B' => result.push('8'),
-            'g' | 'G' => result.push('9'),
-            _ => result.push(c),
-        }
-    }
-    result
-}
+
 
 /// 计算字符串中字母的数量
 fn get_letter_count(s: &str) -> i32 {
@@ -304,26 +289,62 @@ fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut 
     
     None
 }
+fn dfs(candidate: &str, leet_map: HashMap<&str, &str>, password: &str, start: i32, end: i32)->bool{
+    
 
+
+
+    return false;
+}
 fn check_leet_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+    // hashmap
+    let leet_map = HashMap::from([
+        ("a", "4@"),
+        ("b", "68"),
+        ("e", "3"),
+        ("g", "69"),
+        ("i", "1!"),
+        ("l", "1"),
+        ("o", "0"),
+        ("s", "5$"),
+        ("t", "7+"),
+        ("x", "%"),
+        ("z", "2"),
+        ("A", "4@"),
+        ("B", "68"),
+        ("E", "3"),
+        ("G", "69"),
+        ("I", "1!"),
+        ("L", "1"),
+        ("O", "0"),
+        ("S", "5$"),
+        ("T", "7+"),
+        ("X", "%"),
+        ("Z", "2"),
+    ]);
+    
     for (_i, pwd) in passwords.iter().enumerate() {
-        // 计算Leet变换的数量
-        // 这里我们简化处理，实际应该计算所有可能的Leet变换组合
-        let letter_count = get_letter_count(pwd);
-        let leet_combinations = 2_i32.pow(letter_count as u32) - 1;
-        *password_scale += leet_combinations;
-        
-        // 检查密码是否是基础密码的Leet转换
-        let leet_pwd = leet_transform(pwd);
-        if leet_pwd == password {
-            println!("Candidate password would be matched on guess number {}", *password_scale);
-            std::io::stdout().flush().unwrap();
-            return Some(log2(2.0 * (*password_scale as f64)));
+        let mut power_one = 0;
+        let mut power_two = 0;
+        let len = pwd.len();
+        for i in 0..len {
+            let c = pwd.chars().nth(i)?;
+            if let Some(value) = leet_map.get(&c.to_string()) {
+                if value.len() == 1 {
+                    power_one += 1;
+                } else {
+                    power_two += 1;
+                }
+            }
         }
-        
-        // 检查基础密码是否是密码的Leet转换
-        let leet_input = leet_transform(password);
-        if pwd == &leet_input || (!config.case_sensitive && pwd.to_lowercase() == leet_input.to_lowercase()) {
+        if power_one + power_two == 0{
+            continue;
+        }
+        *password_scale += 2_i32.pow(power_one as u32) * 3_i32.pow(power_two as u32) -1;
+        if len != password.len() {
+            continue;
+        }
+        if dfs(pwd, leet_map, password, 0, len as i32) {
             println!("Candidate password would be matched on guess number {}", *password_scale);
             std::io::stdout().flush().unwrap();
             return Some(log2(2.0 * (*password_scale as f64)));
