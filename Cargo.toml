@@ -11,3 +11,6 @@ path = "src/bin/uqentropy.rs"
 log = "0.4"
 env_logger = "0.9"
 chrono = { version = "0.4", features = ["serde"] }
+
+[lints.clippy]
+too_many_lines = "warn"

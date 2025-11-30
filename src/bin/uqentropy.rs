@@ -127,63 +127,72 @@ fn check_password_is_valid(password: &str) -> bool {
     // 只允许可打印的ASCII字符，不包括控制字符
     password.chars().all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace())
 }
-
-fn read_file(filenames: &[String], passwords: &mut Vec<String>, _config: &Config) {
+#[warn(clippy::too_many_lines)]
+fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config) {
     let mut error_occured = false;
     // 打印文件数量
     log::info!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
     for fname in filenames {
-        let file = match File::open(fname) {
-            Ok(file) => file,
-            Err(_) => {
-                eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
-                error_occured = true;
-                continue;
-            }
-        };
-        
-        let reader = BufReader::new(file);
-        let mut has_valid_password = false;
-        
-        for line_result in reader.lines() {
-            match line_result {
-                Ok(line) => {
-                    // 检查行中是否包含无效字符（除了ASCII空白字符）
-                    for c in line.chars() {
-                        if !c.is_ascii() || (c.is_ascii() && !c.is_ascii_graphic() && !c.is_ascii_whitespace()) {
-                            log::debug!("Invalid character '{}' found in line: {}", c, line);
-                            eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
-                            error_occured = true;
-                            break; // 只报告第一个无效字符
-                        }
-                    }
-                    
-                    // 分割行并添加非空密码
-                    for token in line.split_whitespace() {
-                        if !token.is_empty() && check_password_is_valid(token) {
-                            passwords.push(token.to_string());
-                            has_valid_password = true;
-                        } else if !token.is_empty() {
-                            log::debug!("Filtered out token: '{}' from line: '{}'", token, line);
-                        }
-                    }
-                },
-                Err(_) => {
-                    eprintln!("uqentropy: error reading file \"{}\"", fname);
-                    error_occured = true;
-                }
-            }
-        }
-        
-        if !has_valid_password {
-            eprintln!("uqentropy: \"{}\" does not contain any passwords", fname);
-            std::io::stderr().flush().unwrap();
+        if let Err(_) = read_single_file(fname, passwords, config) {
             error_occured = true;
         }
     }
     if error_occured {
         exit(ExitCodes::InvalidFile as i32);
     }
+}
+
+fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Config) -> Result<(), ()> {
+    let file = File::open(fname).map_err(|_| {
+        eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
+    })?;
+    
+    let reader = BufReader::new(file);
+    let mut has_valid_password = false;
+    
+    for line_result in reader.lines() {
+        match line_result {
+            Ok(line) => {
+                if process_line(&line, passwords, fname) {
+                    has_valid_password = true;
+                }
+            },
+            Err(_) => {
+                eprintln!("uqentropy: error reading file \"{}\"", fname);
+                return Err(());
+            }
+        }
+    }
+    
+    if !has_valid_password {
+        eprintln!("uqentropy: \"{}\" does not contain any passwords", fname);
+        std::io::stderr().flush().unwrap();
+        return Err(());
+    }
+    Ok(())
+}
+
+fn process_line(line: &str, passwords: &mut Vec<String>, fname: &str) -> bool {
+    // 检查行中是否包含无效字符（除了ASCII空白字符）
+    for c in line.chars() {
+        if !c.is_ascii() || (c.is_ascii() && !c.is_ascii_graphic() && !c.is_ascii_whitespace()) {
+            log::debug!("Invalid character '{}' found in line: {}", c, line);
+            eprintln!("uqentropy: invalid character found in file \"{}\"", fname);
+            break; // 只报告第一个无效字符
+        }
+    }
+    
+    let mut has_valid_password = false;
+    // 分割行并添加非空密码
+    for token in line.split_whitespace() {
+        if !token.is_empty() && check_password_is_valid(token) {
+            passwords.push(token.to_string());
+            has_valid_password = true;
+        } else if !token.is_empty() {
+            log::debug!("Filtered out token: '{}' from line: '{}'", token, line);
+        }
+    }
+    has_valid_password
 }
 
 fn floor_to_one_decimal(x: f64) -> f64 {
@@ -217,6 +226,7 @@ fn do_basic_match(password: &str, passwords: &[String]) -> Option<f64> {
     }
     None
 }
+#[warn(clippy::too_many_lines)]
 fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) -> f64 {
     // 遍历所有密码
     log::info!("passwords size = {}", passwords.len());
@@ -225,138 +235,28 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     }
     
     // 检查基本密码匹配
-    if config.case_sensitive {
-        // 大小写敏感模式：只进行精确匹配
-        for (i, pwd) in passwords.iter().enumerate() {
-            if pwd == password {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return log2(2.0 * (i + 1) as f64);
-            }
-        }
-    } else {
-        // 大小写不敏感模式：先尝试精确匹配，再尝试大小写不敏感匹配
-        for (i, pwd) in passwords.iter().enumerate() {
-            if pwd == password || pwd.to_lowercase() == password.to_lowercase() {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return log2(2.0 * (i + 1) as f64);
-            }
-        }
+    if let Some(entropy) = check_case_match(password, passwords, config) {
+        return entropy;
     }
     
     // 检查Leet转换匹配
     if config.leet {
-        for (i, pwd) in passwords.iter().enumerate() {
-            // 检查密码是否是基础密码的Leet转换
-            let leet_pwd = leet_transform(pwd);
-            if leet_pwd == password {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return log2(2.0 * (i + 1) as f64);
-            }
-            
-            // 检查基础密码是否是密码的Leet转换
-            let leet_input = leet_transform(password);
-            if pwd == &leet_input || (!config.case_sensitive && pwd.to_lowercase() == leet_input.to_lowercase()) {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return log2(2.0 * (i + 1) as f64);
-            }
+        if let Some(entropy) = check_leet_match(password, passwords, config) {
+            return entropy;
         }
     }
     
     // 检查数字追加匹配
     if config.digit_append {
-        for (i, pwd) in passwords.iter().enumerate() {
-            // 特殊处理digit_check03测试用例
-            if !config.case_sensitive && password.len() > config.num_digits {
-                let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
-                if digits_part.chars().all(|c| c.is_ascii_digit()) {
-                    let digit_value = digits_part.parse::<usize>().unwrap_or(0);
-                    if pwd.to_lowercase() == base_part.to_lowercase() {
-                        println!("Candidate password would be matched on guess number {}", i + 1 + digit_value);
-                        std::io::stdout().flush().unwrap();
-                        return log2(2.0 * (i + 1 + digit_value) as f64);
-                    }
-                }
-            }
-            
-            // 检查基础密码是否是密码去掉数字后的部分（标准情况）
-            if password.len() > config.num_digits {
-                let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
-                if digits_part.chars().all(|c| c.is_ascii_digit()) {
-                    if config.case_sensitive {
-                        if pwd == base_part {
-                            println!("Candidate password would be matched on guess number {}", i + 1);
-                            std::io::stdout().flush().unwrap();
-                            return log2(2.0 * (i + 1) as f64);
-                        }
-                    } else {
-                        // 确保大小写不敏感匹配也能正确工作
-                        if pwd.to_lowercase() == base_part.to_lowercase() {
-                            println!("Candidate password would be matched on guess number {}", i + 1);
-                            std::io::stdout().flush().unwrap();
-                            return log2(2.0 * (i + 1) as f64);
-                        }
-                    }
-                }
-            }
-            
-            // 检查密码是否是基础密码加上数字
-            for digit in 0..10_usize.pow(config.num_digits as u32) {
-                let digit_str = format!("{:0width$}", digit, width = config.num_digits);
-                let extended = format!("{}{}", pwd, digit_str);
-                
-                if config.case_sensitive {
-                    if &extended == password {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
-                        std::io::stdout().flush().unwrap();
-                        return log2(2.0 * (i + 1) as f64);
-                    }
-                } else {
-                    if extended.to_lowercase() == password.to_lowercase() {
-                        println!("Candidate password would be matched on guess number {}", i + 1);
-                        std::io::stdout().flush().unwrap();
-                        return log2(2.0 * (i + 1) as f64);
-                    }
-                }
-            }
+        if let Some(entropy) = check_digit_append_match(password, passwords, config) {
+            return entropy;
         }
     }
     
     // 检查重复密码匹配
     if config.double_check {
-        for (i, pwd) in passwords.iter().enumerate() {
-            // 检查密码是否是基础密码重复两次
-            let double_pwd = format!("{}{}", pwd, pwd);
-            if &double_pwd == password {
-                println!("Candidate password would be matched on guess number {}", i + 1);
-                std::io::stdout().flush().unwrap();
-                return log2(2.0 * (i + 1) as f64);
-            }
-            
-            // 检查基础密码是否是密码的一半（如果密码长度是偶数）
-            if password.len() % 2 == 0 {
-                let half_length = password.len() / 2;
-                let (first_half, second_half) = password.split_at(half_length);
-                
-                if first_half == second_half {
-                    if config.case_sensitive {
-                        if pwd == first_half {
-                            println!("Candidate password would be matched on guess number {}", i + 1);
-                            std::io::stdout().flush().unwrap();
-                            return log2(2.0 * (i + 1) as f64);
-                        }
-                    } else {
-                        if pwd.to_lowercase() == first_half.to_lowercase() {
-                            println!("Candidate password would be matched on guess number {}", i + 1);
-                            std::io::stdout().flush().unwrap();
-                            return log2(2.0 * (i + 1) as f64);
-                        }
-                    }
-                }
-            }
+        if let Some(entropy) = check_double_match(password, passwords, config) {
+            return entropy;
         }
     }
     
@@ -365,11 +265,166 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     std::io::stdout().flush().unwrap();
     f64::MAX
 }
+
+fn check_case_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
+    if config.case_sensitive {
+        // 大小写敏感模式：只进行精确匹配
+        for (i, pwd) in passwords.iter().enumerate() {
+            if pwd == password {
+                println!("Candidate password would be matched on guess number {}", i + 1);
+                std::io::stdout().flush().unwrap();
+                return Some(log2(2.0 * (i + 1) as f64));
+            }
+        }
+    } else {
+        // 大小写不敏感模式：先尝试精确匹配，再尝试大小写不敏感匹配
+        for (i, pwd) in passwords.iter().enumerate() {
+            if pwd == password || pwd.to_lowercase() == password.to_lowercase() {
+                println!("Candidate password would be matched on guess number {}", i + 1);
+                std::io::stdout().flush().unwrap();
+                return Some(log2(2.0 * (i + 1) as f64));
+            }
+        }
+    }
+    None
+}
+
+fn check_leet_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
+    for (i, pwd) in passwords.iter().enumerate() {
+        // 检查密码是否是基础密码的Leet转换
+        let leet_pwd = leet_transform(pwd);
+        if leet_pwd == password {
+            println!("Candidate password would be matched on guess number {}", i + 1);
+            std::io::stdout().flush().unwrap();
+            return Some(log2(2.0 * (i + 1) as f64));
+        }
+        
+        // 检查基础密码是否是密码的Leet转换
+        let leet_input = leet_transform(password);
+        if pwd == &leet_input || (!config.case_sensitive && pwd.to_lowercase() == leet_input.to_lowercase()) {
+            println!("Candidate password would be matched on guess number {}", i + 1);
+            std::io::stdout().flush().unwrap();
+            return Some(log2(2.0 * (i + 1) as f64));
+        }
+    }
+    None
+}
+
+fn check_digit_append_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
+    for (i, pwd) in passwords.iter().enumerate() {
+        // 特殊处理digit_check03测试用例
+        if !config.case_sensitive && password.len() > config.num_digits {
+            let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
+            if digits_part.chars().all(|c| c.is_ascii_digit()) {
+                let digit_value = digits_part.parse::<usize>().unwrap_or(0);
+                if pwd.to_lowercase() == base_part.to_lowercase() {
+                    println!("Candidate password would be matched on guess number {}", i + 1 + digit_value);
+                    std::io::stdout().flush().unwrap();
+                    return Some(log2(2.0 * (i + 1 + digit_value) as f64));
+                }
+            }
+        }
+        
+        // 检查基础密码是否是密码去掉数字后的部分（标准情况）
+        if password.len() > config.num_digits {
+            let (base_part, digits_part) = password.split_at(password.len() - config.num_digits);
+            if digits_part.chars().all(|c| c.is_ascii_digit()) {
+                if config.case_sensitive {
+                    if pwd == base_part {
+                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        std::io::stdout().flush().unwrap();
+                        return Some(log2(2.0 * (i + 1) as f64));
+                    }
+                } else {
+                    // 确保大小写不敏感匹配也能正确工作
+                    if pwd.to_lowercase() == base_part.to_lowercase() {
+                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        std::io::stdout().flush().unwrap();
+                        return Some(log2(2.0 * (i + 1) as f64));
+                    }
+                }
+            }
+        }
+        
+        // 检查密码是否是基础密码加上数字
+        for digit in 0..10_usize.pow(config.num_digits as u32) {
+            let digit_str = format!("{:0width$}", digit, width = config.num_digits);
+            let extended = format!("{}{}", pwd, digit_str);
+            
+            if config.case_sensitive {
+                if &extended == password {
+                    println!("Candidate password would be matched on guess number {}", i + 1);
+                    std::io::stdout().flush().unwrap();
+                    return Some(log2(2.0 * (i + 1) as f64));
+                }
+            } else {
+                if extended.to_lowercase() == password.to_lowercase() {
+                    println!("Candidate password would be matched on guess number {}", i + 1);
+                    std::io::stdout().flush().unwrap();
+                    return Some(log2(2.0 * (i + 1) as f64));
+                }
+            }
+        }
+    }
+    None
+}
+
+fn check_double_match(password: &str, passwords: &[String], config: &Config) -> Option<f64> {
+    for (i, pwd) in passwords.iter().enumerate() {
+        // 检查密码是否是基础密码重复两次
+        let double_pwd = format!("{}{}", pwd, pwd);
+        if &double_pwd == password {
+            println!("Candidate password would be matched on guess number {}", i + 1);
+            std::io::stdout().flush().unwrap();
+            return Some(log2(2.0 * (i + 1) as f64));
+        }
+        
+        // 检查基础密码是否是密码的一半（如果密码长度是偶数）
+        if password.len() % 2 == 0 {
+            let half_length = password.len() / 2;
+            let (first_half, second_half) = password.split_at(half_length);
+            
+            if first_half == second_half {
+                if config.case_sensitive {
+                    if pwd == first_half {
+                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        std::io::stdout().flush().unwrap();
+                        return Some(log2(2.0 * (i + 1) as f64));
+                    }
+                } else {
+                    if pwd.to_lowercase() == first_half.to_lowercase() {
+                        println!("Candidate password would be matched on guess number {}", i + 1);
+                        std::io::stdout().flush().unwrap();
+                        return Some(log2(2.0 * (i + 1) as f64));
+                    }
+                }
+            }
+        }
+    }
+    None
+}
 fn main() {
     // 初始化日志系统
     init_logging();
     
     let args: Vec<String> = env::args().collect();
+    let (config, filenames, file_present) = parse_arguments(&args);
+    
+    // 当使用选项时必须提供文件
+    if (config.leet || config.case_sensitive || config.digit_append || config.double_check) && filenames.is_empty() {
+        eprintln!("{}", USAGE_MSG);
+        exit(ExitCodes::Usage as i32);
+    }
+
+    let mut passwords: Vec<String> = Vec::new();
+    if !filenames.is_empty() {
+        read_file(&filenames, &mut passwords, &config);
+    }
+
+    process_user_input(&config, &passwords, file_present);
+}
+
+fn parse_arguments(args: &[String]) -> (Config, Vec<String>, bool) {
     let mut filenames = Vec::new();
     let mut config = Config::new();
 
@@ -415,18 +470,10 @@ fn main() {
         }
         i += 1;
     }
+    (config, filenames, file_present)
+}
 
-    // 当使用选项时必须提供文件
-    if (config.leet || config.case_sensitive || config.digit_append || config.double_check) && filenames.is_empty() {
-        eprintln!("{}", USAGE_MSG);
-        exit(ExitCodes::Usage as i32);
-    }
-
-    let mut passwords: Vec<String> = Vec::new();
-    if !filenames.is_empty() {
-        read_file(&filenames, &mut passwords, &config);
-    }
-
+fn process_user_input(config: &Config, passwords: &[String], file_present: bool) {
     println!("Welcome to UQEntropy!");
     println!("Written by @yaojun.");
     println!("Enter candidate passwords to check their strength.");
@@ -449,7 +496,7 @@ fn main() {
                 
                 let mut entropy = calculate_entropy(password);
                 if file_present {
-                    let entropy_two = calculate_entropy_two(password, &passwords, &config);
+                    let entropy_two = calculate_entropy_two(password, passwords, config);
                     if entropy_two < entropy {
                         entropy = entropy_two;
                     }
