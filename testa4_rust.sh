@@ -366,4 +366,5 @@ else
     echo "Total score: 0.0000 / 0.0000 (0.00%)"
 fi
 
-make clean
+rm -rf $server_program
+rm -rf $client_program
