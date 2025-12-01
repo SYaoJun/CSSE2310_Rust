@@ -10,5 +10,5 @@ If you want to use this code, please contact the author.
 3. add more testcase
 
 ## Contact
-wx: hysteria00544
-email: libevent@yeah.net
+- wx: hysteria00544
+- email: libevent@yeah.net

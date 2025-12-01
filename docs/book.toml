@@ -1,0 +1,11 @@
+[book]
+title = "UQEntropy Lab Book"
+description = "Lab documentation for the UQEntropy password strength checker"
+authors = ["Yaojun"]
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "navy"
