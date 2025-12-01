@@ -1,0 +1,28 @@
+server read
+server read
+server send MWelcome!\n
+client read
+server send H9SKSTS6SQS3S2H6DQC6H7C6C3D\n
+server send MStarting the game\n
+server send MTeam 1: Ginny, Hermione\n
+server send MTeam 2: Harry, Ron\n
+server send MGinny plays AH\n
+server send PH\n
+client send KH\n
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+client read
+server readtimeout 0.25

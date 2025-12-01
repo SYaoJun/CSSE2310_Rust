@@ -1,0 +1,13 @@
+# Details for test 5.3.
+# $1 will be run_test, explain_test or mark_test.
+function test5.3() {
+    "$1" 5.3 "check_reap_child_processes03" \
+        "Check uqcshell correctly implements checking and reaping child processes after each line is read from stdin with ls printing to stdout and stderr" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/5.3.commands" \
+        --exit 15 \
+        --stdout testfiles/5.3.stdout \
+        --stderr testfiles/empty \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}

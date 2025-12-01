@@ -1,0 +1,13 @@
+# Details for test 13.4.
+# $1 will be run_test, explain_test or mark_test.
+function test13.4() {
+    "$1" 13.4 "basic_redirections04" \
+        "Check uqcshell correctly implements basic redirections for the run command - with a missing filename" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/13.4.commands" \
+        --exit 15 \
+        --stdout testfiles/13.4.stdout \
+        --stderr testfiles/13.4.stderr \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}

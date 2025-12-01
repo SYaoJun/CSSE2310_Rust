@@ -1,0 +1,14 @@
+# Details for test 16.4.
+# $1 will be run_test, explain_test or mark_test.
+function test16.4() {
+    "$1" 16.4 "server_statistics04" \
+        "Check ratsserver handles SIGHUP after four clients connect and end a game early" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/16.4.stdout \
+        --stderr testfiles/16.4.stderr \
+        "A4_DECK=9H9D6C3HTSQD8HQH3S3CKCKH7SAS9C3D6D2S5DJSJHQC4SJD5CAC8CTC2DKDJC4H2CTDAH8S4DQS6SAD7D5H2HKS5S6H9S8DTH4C7H7C" \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/16.4.sequence'
+}

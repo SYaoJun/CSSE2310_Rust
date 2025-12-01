@@ -1,0 +1,13 @@
+# Details for test 9.1.
+# $1 will be run_test, explain_test or mark_test.
+function test9.1() {
+    "$1" 9.1 "server_listens01" \
+        "Check ratsserver handles inability to listen on port already being used" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 17 \
+        --stdout testfiles/empty \
+        --stderr testfiles/9.1.stderr \
+        "testfiles/check_server_badport.sh" 
+}

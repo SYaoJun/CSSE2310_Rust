@@ -1,0 +1,6 @@
+1 openstats
+1 send GET /stats HTTP/1.1\r\n\r\n
+1 readHTTPresponse
+1 send GET /stats HTTP/1.1\r\n\r\n
+1 readHTTPresponse
+1 close

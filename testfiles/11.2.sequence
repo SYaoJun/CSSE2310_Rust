@@ -1,0 +1,66 @@
+1 open
+1 send P1\n
+1 send reallylonggamename\n
+2 open
+2 send P2\n
+2 send reallylonggamename\n
+3 open
+3 send P3\n
+3 send reallylonggamename\n
+4 open
+4 send P4\n
+4 send reallylonggamename\n
+1 send AH\n
+1 send AH\n
+2 send TH\n
+3 send 9H\n
+4 send 7H\n
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 readtimeout 0.25
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 readtimeout 0.25
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 readtimeout 0.25

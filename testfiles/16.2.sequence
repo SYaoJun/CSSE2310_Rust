@@ -1,0 +1,5 @@
+1 open
+1 send player\n
+sighup
+1 close
+sighup

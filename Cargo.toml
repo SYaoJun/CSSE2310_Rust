@@ -6,3 +6,14 @@ edition = "2021"
 [dependencies]
 signal-hook = "0.3"
 nix = { version = "0.29", features = ["process", "signal"] }
+rand = "0.8"
+parking_lot = "0.12"
+libc = "0.2"
+
+[[bin]]
+name = "ratsclient"
+path = "src/ratsclient.rs"
+
+[[bin]]
+name = "ratsserver"
+path = "src/ratsserver.rs"

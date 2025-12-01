@@ -1,0 +1,13 @@
+# Details for test 2.2.
+# $1 will be run_test, explain_test or mark_test.
+function test2.2() {
+    "$1" 2.2 "client_connection02" \
+        "Check ratsclient can connect to server" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/empty \
+        --stderr testfiles/2.2.stderr \
+        "testfiles/check_client_can_connect.sh" 
+}

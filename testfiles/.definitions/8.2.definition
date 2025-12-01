@@ -1,0 +1,13 @@
+# Details for test 8.2.
+# $1 will be run_test, explain_test or mark_test.
+function test8.2() {
+    "$1" 8.2 "server_invalid_cmd_line02" \
+        "Check ratsserver reports usage error" \
+        --timeout 3 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 8 \
+        --stdout testfiles/empty \
+        --stderr testfiles/8.2.stderr \
+        "./ratsserver" ''
+}

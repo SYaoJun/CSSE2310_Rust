@@ -1,0 +1,16 @@
+# Details for test 15.1.
+# $1 will be run_test, explain_test or mark_test.
+function test15.1() {
+    "$1" 15.1 "server_connection_limiting01" \
+        "Check ratsserver handles connection limit of 1 with 2 clients" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/15.1.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/15.1.csse2310.totalthreadcount.txt" \
+        --file "/tmp/csse2310.activethreadcount.txt" "testfiles/15.1.csse2310.activethreadcount.txt" \
+        --file "/tmp/csse2310.activesocketcount.txt" "testfiles/15.1.csse2310.activesocketcount.txt" \
+        "testfiles/check_server_sequence.sh" '1' 'Hi' 'testfiles/15.1.sequence'
+}

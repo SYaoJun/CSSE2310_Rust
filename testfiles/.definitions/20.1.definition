@@ -1,0 +1,14 @@
+# Details for test 20.1.
+# $1 will be run_test, explain_test or mark_test.
+function test20.1() {
+    "$1" 20.1 "server_stats_multiple01" \
+        "(CSSE7231) Check ratsserver handles HTTP stats request before any clients connect" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --optional \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/20.1.stdout \
+        --stderr testfiles/empty \
+        "testfiles/check_server_sequence.sh" '--stats' '0' 'Hello' 'testfiles/20.1.sequence'
+}

@@ -1,0 +1,15 @@
+# Details for test 13.2.
+# $1 will be run_test, explain_test or mark_test.
+function test13.2() {
+    "$1" 13.2 "server_concurrent_games02" \
+        "Check ratsserver handles multiple games that start at the same time" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/13.2.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/13.2.csse2310.totalthreadcount.txt" \
+        "A4_DECK=JD9SADKHJS4C8S9DAHJH6H3CKC5S9HQS5C6D3DTS8C5D2H6CTCQC4S8H2DQHQD7H5H7CASKS2S6SAC8DTDTHJC7S9C2C4D3H4H7DKD3S" \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/13.2.sequence'
+}

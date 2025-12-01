@@ -1,0 +1,6 @@
+pipeline "echo hello world" cat cat cat cat wc
+
+
+
+
+

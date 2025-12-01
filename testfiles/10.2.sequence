@@ -1,0 +1,12 @@
+1 open
+1 send player1\nA\n
+1 read
+2 open
+2 send player2\nB\n
+2 read
+3 open
+3 send player3\nC\n
+3 read
+4 open
+4 send player4\nD\n
+4 read

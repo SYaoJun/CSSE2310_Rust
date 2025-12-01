@@ -1,0 +1,14 @@
+# Details for test 17.4.
+# $1 will be run_test, explain_test or mark_test.
+function test17.4() {
+    "$1" 17.4 "signal_command04" \
+        "Check uqcshell correctly implements the signal command with an invalid signal number" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --optional \
+        --stdin "testfiles/17.4.commands" \
+        --exit 15 \
+        --stdout testfiles/17.4.stdout \
+        --stderr testfiles/17.4.stderr \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}
