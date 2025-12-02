@@ -106,7 +106,8 @@ fn calculate_entropy(password: &str) -> f64 {
         s += 32;
     }
 
-    password.len() as f64 * log2(s as f64)
+    let result = password.len() as f64 * log2(s as f64);
+    floor_to_one_decimal(result)
 }
 
 fn map_to_strength(entropy: f64) -> &'static str {
@@ -232,7 +233,6 @@ fn do_basic_match(password: &str, passwords: &[String], password_scale: &mut i32
 }
 #[warn(clippy::too_many_lines)]
 fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) -> f64 {
-    // 遍历所有密码
     log::info!("passwords size = {}", passwords.len());
     let mut password_scale = 0;
     if let Some(entropy) = do_basic_match(password, passwords, &mut password_scale) {
@@ -501,7 +501,6 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
     let stdin = io::stdin();
     let mut count_strong = 0;
     
-    // 会在 EOF 时自动退出循环
     for line_result in stdin.lock().lines() {
         match line_result {
             Ok(line) => {
@@ -527,11 +526,9 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
                     floor_to_one_decimal(entropy)
                 );
                 println!("Password strength rating: {}", map_to_strength(entropy));
-                // 刷新输出
                 std::io::stdout().flush().unwrap();
             },
             Err(_) => {
-                // 处理输入错误
                 break;
             }
         }
@@ -542,5 +539,21 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
         exit(ExitCodes::NoStrong as i32)
     } else {
         exit(0);
+    }
+}
+
+
+#[cfg(test)]
+mod tests { 
+    use super::*;
+    #[test]
+    fn test_calculate_entropy() {
+        assert_eq!(calculate_entropy("password"), 37.6);
+    }
+
+    #[test]
+    fn test_calculate_entropy_two() {
+        let passwords = vec!["<PASSWORD>".to_string(), "123456".to_string()];
+        assert_eq!(calculate_entropy_two("password", &passwords, &Config::new()), f64::MAX);
     }
 }
