@@ -140,13 +140,21 @@ fn run_client(args: &Arguments) {
         }
     }
 }
-
+fn check_arguments(args: &Vec<String>) -> bool {
+    for key in args {
+        if key.is_empty() {
+            return false;
+        }
+    }
+    true
+}
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 4 {
+    if args.len() != 4 || !check_arguments(&args) {
         eprintln!("Usage: ./ratsclient playername game port");
         process::exit(1);
     }
+
     let arguments = Arguments {
         playername: args[1].clone(),
         game: args[2].clone(),
@@ -161,3 +169,23 @@ fn main() {
     run_client(&arguments);
 }
 
+#[cfg(test)]
+mod tests { 
+    use super::*;
+    #[test]
+    fn test_arguments(){
+        let args = vec![
+            String::from("player1"),
+            String::from("game1"),
+            String::from("8080"),
+        ];
+        assert!(check_arguments(&args));
+
+        let args_with_empty = vec![
+            String::from("player1"),
+            String::from(""),
+            String::from("8080"),
+        ];
+        assert!(!check_arguments(&args_with_empty));
+    }
+}
