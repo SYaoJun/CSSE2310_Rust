@@ -8,7 +8,11 @@ const SPADES_MAX: i32 = 56;
 const CLUBS_MAX: i32 = 42;
 const DIAMONDS_MAX: i32 = 28;
 const HEARTS_MAX: i32 = 14;
-
+enum ExitCode{
+    ArgumentError = 1,
+    ConnectionFailed = 8,
+    CommunicationError = 15,
+}
 const LEAD_PROMPT: &str = "Lead> ";
 // const NOT_LEAD_PROMPT: &str = ;
 
@@ -97,14 +101,14 @@ fn run_client(args: &Arguments) {
     let addr = format!("localhost:{}", args.port);
     let mut stream = TcpStream::connect(addr).unwrap_or_else(|_| {
         eprintln!("ratsclient: cannot connect to the server");
-        process::exit(8);
+        process::exit(ExitCode::ConnectionFailed as i32);
     });
 
     // 发送玩家名和游戏名
     let init_msg = format!("{}\n{}\n", args.playername, args.game);
     stream.write_all(init_msg.as_bytes()).unwrap_or_else(|_| {
         eprintln!("ratsclient: unexpected communication error");
-        process::exit(15);
+        process::exit(ExitCode::CommunicationError as i32);
     });
 
     let mut reader = BufReader::new(stream.try_clone().unwrap());
@@ -115,7 +119,7 @@ fn run_client(args: &Arguments) {
         let mut server_msg = String::new();
         if reader.read_line(&mut server_msg).unwrap_or(0) == 0 {
             eprintln!("ratsclient: unexpected communication error");
-            process::exit(15);
+            process::exit(ExitCode::CommunicationError as i32);
         }
         println!("Info: {}", server_msg.trim_end());
 
@@ -138,6 +142,12 @@ fn run_client(args: &Arguments) {
         } else {
             println!("Invalid input!");
         }
+        // 将这张牌发到服务端
+        let play_msg = format!("{}{}\n", suit, input);
+        stream.write_all(play_msg.as_bytes()).unwrap_or_else(|_| {
+            eprintln!("ratsclient: unexpected communication error");
+            process::exit(ExitCode::CommunicationError as i32);
+        });
     }
 }
 fn check_arguments(args: &Vec<String>) -> bool {
@@ -152,7 +162,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 4 || !check_arguments(&args) {
         eprintln!("Usage: ./ratsclient playername game port");
-        process::exit(1);
+        process::exit(ExitCode::ArgumentError as i32);
     }
 
     let arguments = Arguments {

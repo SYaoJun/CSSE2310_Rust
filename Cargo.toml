@@ -17,3 +17,19 @@ path = "src/ratsclient.rs"
 [[bin]]
 name = "ratsserver"
 path = "src/ratsserver.rs"
+
+[[bin]]
+name = "tcpserver"
+path = "src/tcpserver.rs"
+
+[[bin]]
+name = "tcpclient"
+path = "src/tcpclient.rs"
+
+[[bin]]
+name = "tokio_tcpserver"
+path = "src/tokio_tcpserver.rs"
+
+[[bin]]
+name = "tokio_tcpclient"
+path = "src/tokio_tcpclient.rs"
