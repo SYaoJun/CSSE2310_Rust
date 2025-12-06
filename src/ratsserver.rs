@@ -1,4 +1,4 @@
-use std::io::{Write};
+use std::io::{Write, Read};
 use std::net::TcpListener;
 use std::sync::{Arc, Condvar, Mutex, atomic::{AtomicUsize, Ordering}};
 use std::thread;
@@ -65,6 +65,7 @@ struct ContextInfo{
     games_completed: i32,
     games_terminated: i32,
     total_tricks: i32,
+    max_connections: i32,
 }
 // 客户端信息结构体
 struct ClientInfo {
@@ -90,17 +91,50 @@ impl ClientInfo {
     }
 }
 
-fn handle_new_connection( client_info: Arc<Mutex<ClientInfo>>, context_info: Arc<Mutex<ContextInfo>>) -> std::io::Result<()> {
-    let client_info_guard = client_info.lock().unwrap();
-    let mut stream = client_info_guard.tcp_stream.try_clone().unwrap();
-    stream.write(b"hello world from server").unwrap();
+fn handle_new_connection( client_info: ClientInfo, context_info: Arc<Mutex<ContextInfo>>) -> std::io::Result<()> {
+    let mut stream = client_info.tcp_stream.try_clone().unwrap();
+    let mut buffer = [0; 1024];
+    // 打印当前线程 id
+    println!("当前线程ID: {:?}", thread::current().id());
+    loop{
+        match stream.read(&mut buffer) {
+            Ok(0) => {
+                // 读到0字节，表示连接已断开
+                println!("客户端断开连接");
+                break;
+            }
+            Ok(n) => {
+                // 正常读取到数据
+                println!("收到 {} 字节数据", n);
+                // 处理数据...
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                // 非阻塞模式下的无数据可读
+                continue;
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
+                // 读取超时
+                println!("读取超时");
+                continue;
+            }
+            Err(e) => {
+                // 其他错误，通常表示连接断开
+                println!("读取错误: {}, 连接可能已断开", e);
+                break;
+            }
+        } 
+    }
     let mut context_info_guard = context_info.lock().unwrap();
-    context_info_guard.current_connected += 1;
-    context_info_guard.total_connected += 1;
+    context_info_guard.current_connected -= 1;  
+    context_info_guard.games_completed += 1;
     Ok(())
 }
 
 fn main()->io::Result<()>  {
+    // 接受命令行参数
+    let args: Vec<String> = std::env::args().collect();
+    let maxconns = args.get(1).map(|s| s.parse().unwrap_or(10)).unwrap_or(10);
+    
      let context_info = Arc::new(Mutex::new(ContextInfo{
         current_connected: 0,
         total_connected: 0,
@@ -108,6 +142,7 @@ fn main()->io::Result<()>  {
         games_completed: 0,
         games_terminated: 0,
         total_tricks: 0,
+        max_connections: maxconns as i32,
     }));
     
     println!("进程ID: {}", std::process::id());
@@ -138,12 +173,19 @@ fn main()->io::Result<()>  {
    
     loop{
         let stream = listener.accept().unwrap().0;
-        let client_info = Arc::new(Mutex::new(ClientInfo::new(stream)));
-        // 这里是否需要clone 这个 client_info 到新线程中
-        let client_info_clone = client_info.clone();
+        let client_info = ClientInfo::new(stream);
         let context_info_clone = context_info.clone();
+        {
+            let mut lock = context_info_clone.lock().unwrap();
+            if lock.current_connected >= lock.max_connections as i32 {
+                drop(lock);
+                continue;
+            }
+             lock.current_connected += 1;
+            lock.total_connected += 1;
+        }
         std::thread::spawn(move || {
-            if let Err(e) = handle_new_connection( client_info_clone, context_info_clone) {
+            if let Err(e) = handle_new_connection( client_info, context_info_clone) {
                 eprintln!("Error handling connection: {}", e);
             }
         });
