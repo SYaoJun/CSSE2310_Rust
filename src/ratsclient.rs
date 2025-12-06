@@ -10,6 +10,7 @@ const DIAMONDS_MAX: i32 = 28;
 const HEARTS_MAX: i32 = 14;
 enum ExitCode{
     ArgumentError = 1,
+    InvalidArgument = 3,
     ConnectionFailed = 8,
     CommunicationError = 15,
 }
@@ -151,7 +152,8 @@ fn run_client(args: &Arguments) {
     }
 }
 fn check_arguments(args: &Vec<String>) -> bool {
-    for key in args {
+    // 从索引1开始检查参数（跳过程序名）
+    for key in args.iter().skip(1) {
         if key.is_empty() {
             return false;
         }
@@ -160,9 +162,15 @@ fn check_arguments(args: &Vec<String>) -> bool {
 }
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 4 || !check_arguments(&args) {
+    if args.len() != 4 {
         eprintln!("Usage: ./ratsclient playername game port");
         process::exit(ExitCode::ArgumentError as i32);
+    }
+    
+    // 检查是否有参数为空
+    if !check_arguments(&args) {
+        eprintln!("Usage: ./ratsclient playername game port");
+        process::exit(ExitCode::InvalidArgument as i32);
     }
 
     let arguments = Arguments {
