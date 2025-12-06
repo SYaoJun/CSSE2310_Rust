@@ -1,18 +1,12 @@
-use std::collections::{HashMap, VecDeque};
-use std::io::{Write, Read};
+use std::io::{Write};
 use std::net::TcpListener;
-use std::os::unix::signal::{self, Signal};
-use std::os::fd::{AsRawFd};
-use std::os::unix::net::UnixStream;
-use std::str::FromStr;
-use std::sync::{Arc, Condvar, Mutex, RwLock, atomic::{AtomicBool, AtomicUsize, Ordering}};
+use std::sync::{Arc, Condvar, Mutex, atomic::{AtomicUsize, Ordering}};
 use std::thread;
-use std::time::Duration;
 
 use std::io;
 // 导入第三方库
-use signal_hook::flag::register;
-use libc::{c_void};
+use signal_hook::iterator;
+use signal_hook::consts;
 
 // 简单的信号量实现
 struct ConnectionSemaphore {
@@ -47,58 +41,6 @@ impl ConnectionSemaphore {
     }
 }
 
-// 常量定义
-const DEFAULT_PORT: &str = "7777";
-const MAX_PORT_NUMBER: u16 = 65535;
-const BUFFER_SIZE: usize = 1024;
-const EXIT_SUCCESS: i32 = 0;
-const EXIT_FAILURE: i32 = 1;
-const DEFAULT_MESSAGE: &str = "Welcome to Rats!";
-const MAX_CONNECTIONS: usize = 100;
-
-// 常量定义
-const LOCALHOST: &str = "localhost";
-const MIN_ARGS_SIZE: usize = 3;
-const MAX_ARGS_SIZE: usize = 4;
-const MAX_INT_SIZE: usize = 5;
-const MAX_CONNECT_NUM: usize = 10000;
-const MAX_ROUND: usize = 13;
-const MAX_TRICKS: usize = 13;
-const CARD_SIZE: usize = 256;
-const DATA_SIZE: usize = 1024;
-const TEMP_SIZE: usize = 64;
-const MAX_PLAYER_NUM: usize = 4;
-const MAX_CARD_NUM: usize = 32;
-const MAX_DECK_SIZE: usize = 104;
-const SINGLE_CARD_GROUP: usize = 8;
-const CARD_ACE: i32 = 14;
-const CARD_KING: i32 = 13;
-const CARD_QUEEN: i32 = 12;
-const CARD_JACK: i32 = 11;
-const CARD_TEN: i32 = 10;
-const CARD_MIN_NUM: i32 = 2;
-const CARD_MAX_NUM: i32 = 9;
-const PLAYER_ZERO_MOD: usize = 0;
-const PLAYER_ONE_MOD: usize = 2;
-const PLAYER_TWO_MOD: usize = 4;
-const PLAYER_THREE_MOD: usize = 6;
-const TEAM_ONE_FIRST_PLAYER: usize = 0;
-const TEAM_ONE_SECOND_PLAYER: usize = 2;
-const TEAM_TWO_FIRST_PLAYER: usize = 1;
-const TEAM_TWO_SECOND_PLAYER: usize = 3;
-const PLAYER_THREE_INDEX: usize = 3;
-const NAME_LENGTH: usize = 10;
-const HAND_CARD_STEP: usize = 2;
-const MIN_RECV_LEN: usize = 2;
-const INITIAL_TURN: usize = 0;
-const INITIAL_LEADING: usize = 0;
-const INITIAL_PLAYER_IDX: usize = 0;
-const MSG_NOSIGNAL: i32 = 0x00000008; // 模拟C的MSG_NOSIGNAL标志
-
-// 退出状态码
-const EXIT_SYSTEM_STATUS: i32 = 20;
-const EXIT_PORT_STATUS: i32 = 17;
-const EXIT_USAGE_STATUS: i32 = 8;
 
 // 状态枚举
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -159,7 +101,7 @@ fn handle_new_connection( client_info: Arc<Mutex<ClientInfo>>, context_info: Arc
 }
 
 fn main()->io::Result<()>  {
-     let mut context_info = Arc::new(Mutex::new(ContextInfo{
+     let context_info = Arc::new(Mutex::new(ContextInfo{
         current_connected: 0,
         total_connected: 0,
         running_games: 0,
@@ -167,7 +109,6 @@ fn main()->io::Result<()>  {
         games_terminated: 0,
         total_tricks: 0,
     }));
-    let mut sig = signal::Signal::new(signal::SignalKind::hangup())?;
     
     println!("进程ID: {}", std::process::id());
     println!("发送SIGHUP信号: kill -HUP {}", std::process::id());
@@ -175,25 +116,21 @@ fn main()->io::Result<()>  {
     // 在单独的线程中处理信号
     let context_info_clone_sig = context_info.clone();
     thread::spawn(move || {
-        loop {
-            // 等待信号
-            sig.recv().expect("等待信号失败");
-            /*
-            Players connected: 4
-            Total connected players: 4
-            Running games: 1
-            Games completed: 0
-            Games terminated: 0
-            Total tricks: 0
-            */
-            let mut context_info_guard = context_info_clone_sig.lock().unwrap();
-            println!("Players connected: {}", context_info_guard.current_connected);
-            println!("Total connected players: {}", context_info_guard.total_connected);
-            println!("Running games: {}", context_info_guard.running_games);
-            println!("Games completed: {}", context_info_guard.games_completed);
-            println!("Games terminated: {}", context_info_guard.games_terminated);
-            println!("Total tricks: {}", context_info_guard.total_tricks);
-            
+        // 使用signal_hook库注册SIGHUP信号处理
+        let mut signal_receiver = iterator::Signals::new(&[consts::SIGHUP])
+            .expect("Failed to register signal handler");
+        
+        // 无限循环等待信号
+        for signal in signal_receiver.forever() {
+            if signal == consts::SIGHUP {
+                let context_info_guard = context_info_clone_sig.lock().unwrap();
+                println!("Players connected: {}", context_info_guard.current_connected);
+                println!("Total connected players: {}", context_info_guard.total_connected);
+                println!("Running games: {}", context_info_guard.running_games);
+                println!("Games completed: {}", context_info_guard.games_completed);
+                println!("Games terminated: {}", context_info_guard.games_terminated);
+                println!("Total tricks: {}", context_info_guard.total_tricks);
+            }
         }
     });
     
@@ -202,6 +139,7 @@ fn main()->io::Result<()>  {
     loop{
         let stream = listener.accept().unwrap().0;
         let client_info = Arc::new(Mutex::new(ClientInfo::new(stream)));
+        // 这里是否需要clone 这个 client_info 到新线程中
         let client_info_clone = client_info.clone();
         let context_info_clone = context_info.clone();
         std::thread::spawn(move || {
