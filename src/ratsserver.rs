@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::{Write, Read};
 use std::net::TcpListener;
+use std::os::unix::signal::{self, Signal};
 use std::os::fd::{AsRawFd};
 use std::os::unix::net::UnixStream;
 use std::str::FromStr;
@@ -8,6 +9,7 @@ use std::sync::{Arc, Condvar, Mutex, RwLock, atomic::{AtomicBool, AtomicUsize, O
 use std::thread;
 use std::time::Duration;
 
+use std::io;
 // 导入第三方库
 use signal_hook::flag::register;
 use libc::{c_void};
@@ -114,7 +116,14 @@ struct Arguments {
     port: Option<String>,
     message: String,
 }
-
+struct ContextInfo{
+    current_connected: i32,
+    total_connected: i32,
+    running_games: i32,
+    games_completed: i32,
+    games_terminated: i32,
+    total_tricks: i32,
+}
 // 客户端信息结构体
 struct ClientInfo {
     next: Option<Arc<Mutex<ClientInfo>>>,
@@ -139,23 +148,64 @@ impl ClientInfo {
     }
 }
 
-fn handle_new_connection( client_info: Arc<Mutex<ClientInfo>>) -> std::io::Result<()> {
+fn handle_new_connection( client_info: Arc<Mutex<ClientInfo>>, context_info: Arc<Mutex<ContextInfo>>) -> std::io::Result<()> {
     let client_info_guard = client_info.lock().unwrap();
     let mut stream = client_info_guard.tcp_stream.try_clone().unwrap();
     stream.write(b"hello world from server").unwrap();
-    
+    let mut context_info_guard = context_info.lock().unwrap();
+    context_info_guard.current_connected += 1;
+    context_info_guard.total_connected += 1;
     Ok(())
 }
 
-fn main() {
+fn main()->io::Result<()>  {
+     let mut context_info = Arc::new(Mutex::new(ContextInfo{
+        current_connected: 0,
+        total_connected: 0,
+        running_games: 0,
+        games_completed: 0,
+        games_terminated: 0,
+        total_tricks: 0,
+    }));
+    let mut sig = signal::Signal::new(signal::SignalKind::hangup())?;
+    
+    println!("进程ID: {}", std::process::id());
+    println!("发送SIGHUP信号: kill -HUP {}", std::process::id());
+    
+    // 在单独的线程中处理信号
+    let context_info_clone_sig = context_info.clone();
+    thread::spawn(move || {
+        loop {
+            // 等待信号
+            sig.recv().expect("等待信号失败");
+            /*
+            Players connected: 4
+            Total connected players: 4
+            Running games: 1
+            Games completed: 0
+            Games terminated: 0
+            Total tricks: 0
+            */
+            let mut context_info_guard = context_info_clone_sig.lock().unwrap();
+            println!("Players connected: {}", context_info_guard.current_connected);
+            println!("Total connected players: {}", context_info_guard.total_connected);
+            println!("Running games: {}", context_info_guard.running_games);
+            println!("Games completed: {}", context_info_guard.games_completed);
+            println!("Games terminated: {}", context_info_guard.games_terminated);
+            println!("Total tricks: {}", context_info_guard.total_tricks);
+            
+        }
+    });
     
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+   
     loop{
         let stream = listener.accept().unwrap().0;
         let client_info = Arc::new(Mutex::new(ClientInfo::new(stream)));
         let client_info_clone = client_info.clone();
+        let context_info_clone = context_info.clone();
         std::thread::spawn(move || {
-            if let Err(e) = handle_new_connection( client_info_clone) {
+            if let Err(e) = handle_new_connection( client_info_clone, context_info_clone) {
                 eprintln!("Error handling connection: {}", e);
             }
         });
