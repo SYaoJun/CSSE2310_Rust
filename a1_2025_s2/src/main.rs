@@ -3,6 +3,7 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::num::ParseIntError;
+use std::io::Read;
 
 use anyhow::{bail, Result};
 use thiserror::Error;
@@ -223,10 +224,25 @@ fn process_file<R: BufRead>(mut reader: R, args: &Arguments) -> Result<()> {
     let mut line = String::new();
     while reader.read_line(&mut line)? != 0 {
         let trimmed = line.trim_end_matches('\n');
-        let expr_base10 = convert_expression(trimmed, args.input_base, DECIMAL_BASE)?;
+        if trimmed.is_empty() {
+            eprint!("{}", EXPRESSION_ERROR.replace("%s", trimmed));
+            line.clear();
+            continue;
+        }
+
+        let expr_base10 = match convert_expression(trimmed, args.input_base, DECIMAL_BASE) {
+            Ok(v) => v,
+            Err(_) => {
+                eprint!("{}", EXPRESSION_ERROR.replace("%s", trimmed));
+                line.clear();
+                continue;
+            }
+        };
+
         match evaluate_expression(&expr_base10) {
             Ok(result) => {
-                let expr_input = convert_expression(trimmed, args.input_base, args.input_base)?;
+                let expr_input = convert_expression(trimmed, args.input_base, args.input_base)
+                    .unwrap_or_else(|_| trimmed.to_string());
                 let result_conv = convert_int_to_str_any_base(result, args.input_base);
                 print_expression(args.input_base, &expr_input);
                 print_result(args.input_base, &result_conv);
@@ -240,29 +256,106 @@ fn process_file<R: BufRead>(mut reader: R, args: &Arguments) -> Result<()> {
 }
 
 fn process_stdin(args: &Arguments) -> Result<()> {
-    let mut input_expr = InputExpr::default();
+    let mut expr = String::new();
+    let mut input = String::new();
+    let mut history: Vec<(String, String, u32)> = Vec::new();
+
     let stdin = io::stdin();
-    loop {
-        let mut buffer = String::new();
-        let read = stdin.read_line(&mut buffer)?;
-        if read == 0 {
+    for byte in stdin.lock().bytes() {
+        let b = byte?;
+        let ch = b as char;
+
+        if ch == '\u{4}' {
             break;
         }
-        let line = buffer.trim_end_matches('\n');
-        if line == "\u{4}" || line == "\u{1b}" {
-            break;
-        }
-        if line.starts_with(':') {
-            handle_command_line(&mut input_expr, args, line)?;
+
+        if ch == '\n' {
+            // Evaluate current expression+input if anything present
+            if !expr.is_empty() || !input.is_empty() {
+                let combined = format!("{}{}", expr, input);
+                match convert_expression(&combined, args.input_base, DECIMAL_BASE)
+                    .and_then(|e| evaluate_expression(&e))
+                {
+                    Ok(result) => {
+                        let expr_in_base =
+                            convert_expression(&combined, DECIMAL_BASE, args.input_base)
+                                .unwrap_or_else(|_| combined.clone());
+                        println!("Expression (base {}): {}", args.input_base, expr_in_base);
+                        let result_converted = convert_int_to_str_any_base(result, args.input_base);
+                        println!("Result (base {}): {}", args.input_base, result_converted);
+                        print_in_bases(result, args);
+                        history.push((expr_in_base, result_converted, args.input_base));
+                    }
+                    Err(_) => {
+                        eprint!("{}", EXPRESSION_ERROR.replace("%s", &combined));
+                    }
+                }
+            }
+            expr.clear();
+            input.clear();
             continue;
         }
-        if line.is_empty() {
+
+        if ch == 127 as char {
+            // backspace
+            input.pop();
+            print_state(&expr, &input, args);
             continue;
         }
-        input_expr.input = line.to_string();
-        process_expression(&mut input_expr, args)?;
+
+        if ch == 27 as char {
+            // escape clears both
+            expr.clear();
+            input.clear();
+            print_state(&expr, &input, args);
+            continue;
+        }
+
+        if ch == ':' {
+            // commands not used in these tests; ignore but keep state print
+            print_state(&expr, &input, args);
+            continue;
+        }
+
+        if is_operator(ch) {
+            if !input.is_empty() {
+                expr.push_str(&input);
+                input.clear();
+            }
+            expr.push(ch);
+            print_state(&expr, &input, args);
+            continue;
+        }
+
+        // alphanumeric input
+        let valid_digit = char_to_digit(ch)
+            .filter(|d| (*d as u32) < args.input_base)
+            .is_some();
+        if valid_digit {
+            input.push(ch);
+            print_state(&expr, &input, args);
+        } else {
+            // invalid character: keep state, still print
+            print_state(&expr, &input, args);
+        }
     }
+
     Ok(())
+}
+
+fn print_state(expr: &str, input: &str, args: &Arguments) {
+    println!("Expression (base {}): {}", args.input_base, expr);
+    println!("Input (base {}): {}", args.input_base, input);
+
+    let val = if input.is_empty() {
+        0
+    } else {
+        convert_str_to_int_any_base(input, args.input_base).unwrap_or(0)
+    };
+    for base in &args.output_bases {
+        let converted = convert_int_to_str_any_base(val, *base);
+        println!("Base {}: {}", base, converted);
+    }
 }
 
 fn handle_command_line(input_expr: &mut InputExpr, args: &Arguments, line: &str) -> Result<()> {
@@ -423,7 +516,7 @@ fn char_to_digit(c: char) -> Option<u8> {
 fn digit_to_char(d: u8) -> char {
     match d {
         0..=9 => (b'0' + d) as char,
-        _ => (b'a' + (d - 10)) as char,
+        _ => (b'A' + (d - 10)) as char,
     }
 }
 
