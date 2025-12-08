@@ -114,6 +114,9 @@ fn parse_command_line() -> Result<Arguments, ExitError> {
         output_bases: DEFAULT_OUTPUT_BASES.to_vec(),
         input_file_name: None,
     };
+    let mut input_base_set = false;
+    let mut output_base_set = false;
+    let mut input_file_set = false;
 
     let mut i = 0;
     while i < argv.len() {
@@ -124,22 +127,34 @@ fn parse_command_line() -> Result<Arguments, ExitError> {
         let key = &token[2..];
         match key {
             INPUT_BASE_ARG => {
+                if input_base_set {
+                    return Err(ExitError::Usage);
+                }
                 i += 1;
                 let val = argv.get(i).ok_or(ExitError::Usage)?;
                 args.input_base = check_base(val).ok_or(ExitError::Usage)?;
+                input_base_set = true;
             }
             OUTPUT_BASE_ARG => {
+                if output_base_set {
+                    return Err(ExitError::Usage);
+                }
                 i += 1;
                 let val = argv.get(i).ok_or(ExitError::Usage)?;
                 args.output_bases = parse_output_bases(val).map_err(|_| ExitError::Usage)?;
+                output_base_set = true;
             }
             INPUT_FILE_ARG => {
+                if input_file_set {
+                    return Err(ExitError::Usage);
+                }
                 i += 1;
                 let val = argv.get(i).ok_or(ExitError::Usage)?;
                 if val.is_empty() {
                     return Err(ExitError::Usage);
                 }
                 args.input_file_name = Some(val.clone());
+                input_file_set = true;
             }
             _ => return Err(ExitError::Usage),
         }
@@ -155,9 +170,13 @@ fn parse_output_bases(src: &str) -> Result<Vec<u32>, ParseIntError> {
         if part.is_empty() {
             return Err("".parse::<u32>().unwrap_err());
         }
-        let val = check_base(part).ok_or_else(|| "0".parse::<u32>().unwrap_err())?;
+        // If check_base() failed (e.g. value out of 2..=36 or non-digit), fabricate
+        // a ParseIntError using an intentionally invalid parse so we can bubble up
+        // an Err instead of panicking (previously unwrap_err on "0" would panic
+        // because it parses successfully).
+        let val = check_base(part).ok_or_else(|| "".parse::<u32>().unwrap_err())?;
         if bases.contains(&val) {
-            return Err("0".parse::<u32>().unwrap_err());
+            return Err("".parse::<u32>().unwrap_err());
         }
         bases.push(val);
     }
