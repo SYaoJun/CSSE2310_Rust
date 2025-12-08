@@ -1,0 +1,13 @@
+# Details for test 1.13.
+# $1 will be run_test, explain_test or mark_test.
+function test1.13() {
+    "$1" 1.13 "invalid_cmd_lines13" \
+        "Check uqbasejump reports a usage error with argument(s) '--obases 2,3,+4'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 7 \
+        --stdout testfiles/empty \
+        --stderr testfiles/1.13.stderr \
+        "./uqbasejump" '--obases' '2,3,+4'
+}

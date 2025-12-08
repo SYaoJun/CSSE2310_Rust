@@ -1,0 +1,13 @@
+# Details for test 3.11.
+# $1 will be run_test, explain_test or mark_test.
+function test3.11() {
+    "$1" 3.11 "startup_message11" \
+        "Check startup message is printed with argument(s) '--obases 36'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/3.11.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--obases' '36'
+}

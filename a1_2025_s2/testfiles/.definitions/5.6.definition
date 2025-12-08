@@ -1,0 +1,13 @@
+# Details for test 5.6.
+# $1 will be run_test, explain_test or mark_test.
+function test5.6() {
+    "$1" 5.6 "input_file_with_args06" \
+        "Check uqbasejump with --inputfile argument handles a combination of --inbase and --obases arguments" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/5.6.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--inbase' '36' '--inputfile' 'testfiles/5.2.file' '--obases' '10,2,16'
+}

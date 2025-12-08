@@ -1,0 +1,13 @@
+# Details for test 4.1.
+# $1 will be run_test, explain_test or mark_test.
+function test4.1() {
+    "$1" 4.1 "input_file_no_args01" \
+        "Check uqbasejump with --inputfile argument handles two valid expressions" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.1.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--inputfile' 'testfiles/4.1.file'
+}

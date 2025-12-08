@@ -1,0 +1,13 @@
+# Details for test 9.2.
+# $1 will be run_test, explain_test or mark_test.
+function test9.2() {
+    "$1" 9.2 "evaluate_multi_stdin02" \
+        "Check uqbasejump operates correctly when the newline character is entered via stdin to evaluate expressions consisting of multiple numbers and arithmetic operations with a single subtraction operation" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/9.2.in" \
+        --exit 0 \
+        --stdout testfiles/9.2.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

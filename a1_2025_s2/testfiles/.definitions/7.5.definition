@@ -1,0 +1,13 @@
+# Details for test 7.5.
+# $1 will be run_test, explain_test or mark_test.
+function test7.5() {
+    "$1" 7.5 "arithmetic_stdin05" \
+        "Check uqbasejump operates correctly when arithmetic operations are entered via stdin with a combination of operations" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/7.5.in" \
+        --exit 0 \
+        --stdout testfiles/7.5.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

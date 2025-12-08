@@ -1,0 +1,13 @@
+# Details for test 12.2.
+# $1 will be run_test, explain_test or mark_test.
+function test12.2() {
+    "$1" 12.2 "input_output_bases_stdin02" \
+        "Check uqbasejump operates correctly when input and/or output bases are redefined with the output bases redefined" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/12.2.in" \
+        --exit 0 \
+        --stdout testfiles/12.2.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

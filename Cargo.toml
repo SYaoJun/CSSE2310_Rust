@@ -1,16 +1,7 @@
-[package]
-name = "a1"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = [
+    "a1_2024_s2",
+    "a1_2025_s2",
+]
+resolver = "2"
 
-[[bin]]
-name = "uqentropy"
-path = "src/bin/uqentropy.rs"
-
-[dependencies]
-log = "0.4"
-env_logger = "0.9"
-chrono = { version = "0.4", features = ["serde"] }
-
-[lints.clippy]
-too_many_lines = "warn"

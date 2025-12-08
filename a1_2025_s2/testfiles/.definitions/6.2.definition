@@ -1,0 +1,13 @@
+# Details for test 6.2.
+# $1 will be run_test, explain_test or mark_test.
+function test6.2() {
+    "$1" 6.2 "alphanumeric_stdin02" \
+        "Check uqbasejump operates correctly when alphanumeric characters are entered via stdin with a small number consisting of multiple characters" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/6.2.in" \
+        --exit 0 \
+        --stdout testfiles/6.2.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

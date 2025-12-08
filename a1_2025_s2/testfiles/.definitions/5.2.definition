@@ -1,0 +1,13 @@
+# Details for test 5.2.
+# $1 will be run_test, explain_test or mark_test.
+function test5.2() {
+    "$1" 5.2 "input_file_with_args02" \
+        "Check uqbasejump with --inputfile argument handles --obases argument" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/5.2.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--obases' '16,10,2' '--inputfile' 'testfiles/5.1.file'
+}

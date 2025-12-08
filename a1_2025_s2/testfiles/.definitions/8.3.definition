@@ -1,0 +1,13 @@
+# Details for test 8.3.
+# $1 will be run_test, explain_test or mark_test.
+function test8.3() {
+    "$1" 8.3 "evaluate_single_stdin03" \
+        "Check uqbasejump operates correctly when the newline character is entered via stdin to evaluate an expression consisting of a single number with a single invalid character for all bases" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/8.3.in" \
+        --exit 0 \
+        --stdout testfiles/8.3.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--inbase' '36'
+}

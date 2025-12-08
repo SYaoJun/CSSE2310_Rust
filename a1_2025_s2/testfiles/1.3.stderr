@@ -1,0 +1,1 @@
+Usage: ./uqbasejump [--obases 2..36] [--inbase 2..36] [--inputfile string]

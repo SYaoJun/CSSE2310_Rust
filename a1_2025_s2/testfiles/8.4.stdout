@@ -1,0 +1,26 @@
+Welcome to uqbasejump!
+s4903470 wrote this program.
+Input base set to: 10
+Output bases: 2, 10, 16
+Please enter your numbers and expressions.
+Expression (base 10): 
+Input (base 10): 9
+Base 2: 1001
+Base 10: 9
+Base 16: 9
+Expression (base 10): 
+Input (base 10): 9
+Base 2: 1001
+Base 10: 9
+Base 16: 9
+Expression (base 10): 
+Input (base 10): 95
+Base 2: 1011111
+Base 10: 95
+Base 16: 5F
+Expression (base 10): 95
+Result (base 10): 95
+Base 2: 1011111
+Base 10: 95
+Base 16: 5F
+Thanks for using uqbasejump.

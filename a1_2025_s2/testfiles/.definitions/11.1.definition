@@ -1,0 +1,13 @@
+# Details for test 11.1.
+# $1 will be run_test, explain_test or mark_test.
+function test11.1() {
+    "$1" 11.1 "escape_stdin01" \
+        "Check uqbasejump operates correctly when escape is pressed to clear the input and expression with an input and no expression" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/11.1.in" \
+        --exit 0 \
+        --stdout testfiles/11.1.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

@@ -1,0 +1,30 @@
+Welcome to uqbasejump!
+s4903470 wrote this program.
+Input base set to: 36
+Output bases: 10, 2, 16
+Expression (base 36): 101+10
+Result (base 36): 111
+Base 10: 1333
+Base 2: 10100110101
+Base 16: 535
+Expression (base 36): ZZ-A
+Result (base 36): ZP
+Base 10: 1285
+Base 2: 10100000101
+Base 16: 505
+Expression (base 36): 123*456
+Result (base 36): 4DSRI
+Base 10: 7362270
+Base 2: 11100000101011011011110
+Base 16: 7056DE
+Expression (base 36): 1A+2B
+Result (base 36): 3L
+Base 10: 129
+Base 2: 10000001
+Base 16: 81
+Expression (base 36): HELLO/2
+Result (base 36): 8PASU
+Base 10: 14617326
+Base 2: 110111110000101011101110
+Base 16: DF0AEE
+Thanks for using uqbasejump.

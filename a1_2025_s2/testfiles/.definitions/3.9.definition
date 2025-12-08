@@ -1,0 +1,13 @@
+# Details for test 3.9.
+# $1 will be run_test, explain_test or mark_test.
+function test3.9() {
+    "$1" 3.9 "startup_message09" \
+        "Check startup message is printed with argument(s) '--inbase 36'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/3.9.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--inbase' '36'
+}

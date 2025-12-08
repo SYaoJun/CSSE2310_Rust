@@ -1,0 +1,17 @@
+Welcome to uqbasejump!
+s4903470 wrote this program.
+Input base set to: 10
+Output bases: 2
+Expression (base 10): 32+1
+Result (base 10): 33
+Base 2: 100001
+Expression (base 10): 22*3
+Result (base 10): 66
+Base 2: 1000010
+Expression (base 10): 10/2
+Result (base 10): 5
+Base 2: 101
+Expression (base 10): 123-45+6
+Result (base 10): 84
+Base 2: 1010100
+Thanks for using uqbasejump.

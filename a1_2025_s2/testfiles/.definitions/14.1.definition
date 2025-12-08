@@ -1,0 +1,13 @@
+# Details for test 14.1.
+# $1 will be run_test, explain_test or mark_test.
+function test14.1() {
+    "$1" 14.1 "multiple_options_stdin01" \
+        "Check uqbasejump operates correctly when given multiple command line arguments, arithmetic expressions, key presses, and commands entered via stdin - one of each command line argument, arithmetic operation, key press and command - simple usage" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/14.1.in" \
+        --exit 0 \
+        --stdout testfiles/14.1.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" '--obases' '16,10,2' '--inbase' '10'
+}

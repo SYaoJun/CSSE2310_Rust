@@ -1,0 +1,340 @@
+Welcome to uqbasejump!
+s4903470 wrote this program.
+Input base set to: 10
+Output bases: 16, 2, 10
+Please enter your numbers and expressions.
+Expression (base 10): 
+Input (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 1+
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 1+
+Input (base 10): 5
+Base 16: 5
+Base 2: 101
+Base 10: 5
+Expression (base 10): 1+5*
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 1+5*
+Input (base 10): 2
+Base 16: 2
+Base 2: 10
+Base 10: 2
+Expression (base 10): 1+5*2
+Result (base 10): 11
+Base 16: B
+Base 2: 1011
+Base 10: 11
+Expression (base 10): 
+Input (base 10): 4
+Base 16: 4
+Base 2: 100
+Base 10: 4
+Expression (base 10): 4*
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 4*
+Input (base 10): 2
+Base 16: 2
+Base 2: 10
+Base 10: 2
+Expression (base 10): 4*2/
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 4*2/
+Input (base 10): 5
+Base 16: 5
+Base 2: 101
+Base 10: 5
+Expression (base 10): 4*2/5
+Result (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 1+5*2
+Result (base 10): 11
+Expression (base 10): 4*2/5
+Result (base 10): 1
+Expression (base 10): 
+Input (base 10): 9
+Base 16: 9
+Base 2: 1001
+Base 10: 9
+Expression (base 10): 9/
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 9/
+Input (base 10): 3
+Base 16: 3
+Base 2: 11
+Base 10: 3
+Expression (base 10): 9/3-
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 9/3-
+Input (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 9/3-1
+Result (base 10): 2
+Base 16: 2
+Base 2: 10
+Base 10: 2
+Expression (base 10): 
+Input (base 10): 3
+Base 16: 3
+Base 2: 11
+Base 10: 3
+Expression (base 10): 3+
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 3+
+Input (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 3+1*
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 3+1*
+Input (base 10): 2
+Base 16: 2
+Base 2: 10
+Base 10: 2
+Expression (base 10): 3+1*
+Input (base 10): 22
+Base 16: 16
+Base 2: 10110
+Base 10: 22
+Expression (base 10): 3+1*22
+Result (base 10): 25
+Base 16: 19
+Base 2: 11001
+Base 10: 25
+Expression (base 10): 
+Input (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 
+Input (base 10): 12
+Base 16: C
+Base 2: 1100
+Base 10: 12
+Expression (base 10): 
+Input (base 10): 123
+Base 16: 7B
+Base 2: 1111011
+Base 10: 123
+Expression (base 10): 
+Input (base 10): 1234
+Base 16: 4D2
+Base 2: 10011010010
+Base 10: 1234
+Expression (base 10): 
+Input (base 10): 123
+Base 16: 7B
+Base 2: 1111011
+Base 10: 123
+Expression (base 10): 123+
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 
+Input (base 10): 1
+Base 16: 1
+Base 2: 1
+Base 10: 1
+Expression (base 10): 
+Input (base 10): 12
+Base 16: C
+Base 2: 1100
+Base 10: 12
+Expression (base 10): 
+Input (base 10): 123
+Base 16: 7B
+Base 2: 1111011
+Base 10: 123
+Expression (base 10): 
+Input (base 10): 1234
+Base 16: 4D2
+Base 2: 10011010010
+Base 10: 1234
+Expression (base 10): 
+Input (base 10): 123
+Base 16: 7B
+Base 2: 1111011
+Base 10: 123
+Expression (base 10): 
+Input (base 10): 12
+Base 16: C
+Base 2: 1100
+Base 10: 12
+Expression (base 10): 12*
+Input (base 10): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 10): 12*
+Input (base 10): 2
+Base 16: 2
+Base 2: 10
+Base 10: 2
+Expression (base 10): 12*2
+Result (base 10): 24
+Base 16: 18
+Base 2: 11000
+Base 10: 24
+Expression (base 10): 1+5*2
+Result (base 10): 11
+Expression (base 10): 4*2/5
+Result (base 10): 1
+Expression (base 10): 9/3-1
+Result (base 10): 2
+Expression (base 10): 3+1*22
+Result (base 10): 25
+Expression (base 10): 12*2
+Result (base 10): 24
+Expression (base 16): 
+Input (base 16): 
+Base 16: 0
+Base 2: 0
+Base 10: 0
+Expression (base 16): 
+Input (base 16): 
+Base 2: 0
+Base 8: 0
+Base 10: 0
+Base 16: 0
+Expression (base 16): 
+Input (base 16): A
+Base 2: 1010
+Base 8: 12
+Base 10: 10
+Base 16: A
+Expression (base 16): A*
+Input (base 16): 
+Base 2: 0
+Base 8: 0
+Base 10: 0
+Base 16: 0
+Expression (base 16): A*
+Input (base 16): A
+Base 2: 1010
+Base 8: 12
+Base 10: 10
+Base 16: A
+Expression (base 16): A*A-
+Input (base 16): 
+Base 2: 0
+Base 8: 0
+Base 10: 0
+Base 16: 0
+Expression (base 16): A*A-
+Input (base 16): 1
+Base 2: 1
+Base 8: 1
+Base 10: 1
+Base 16: 1
+Expression (base 16): A*A-1
+Result (base 16): 63
+Base 2: 1100011
+Base 8: 143
+Base 10: 99
+Base 16: 63
+Expression (base 16): 
+Input (base 16): D
+Base 2: 1101
+Base 8: 15
+Base 10: 13
+Base 16: D
+Expression (base 16): 
+Input (base 16): DE
+Base 2: 11011110
+Base 8: 336
+Base 10: 222
+Base 16: DE
+Expression (base 16): 
+Input (base 16): DEA
+Base 2: 110111101010
+Base 8: 6752
+Base 10: 3562
+Base 16: DEA
+Expression (base 16): 
+Input (base 16): DEAD
+Base 2: 1101111010101101
+Base 8: 157255
+Base 10: 57005
+Base 16: DEAD
+Expression (base 16): 
+Input (base 16): DEADB
+Base 2: 11011110101011011011
+Base 8: 3365333
+Base 10: 912091
+Base 16: DEADB
+Expression (base 16): 
+Input (base 16): DEADBE
+Base 2: 110111101010110110111110
+Base 8: 67526676
+Base 10: 14593470
+Base 16: DEADBE
+Expression (base 16): 
+Input (base 16): DEADBEE
+Base 2: 1101111010101101101111101110
+Base 8: 1572555756
+Base 10: 233495534
+Base 16: DEADBEE
+Expression (base 16): 
+Input (base 16): DEADBEEF
+Base 2: 11011110101011011011111011101111
+Base 8: 33653337357
+Base 10: 3735928559
+Base 16: DEADBEEF
+Expression (base 16): DEADBEEF
+Result (base 16): DEADBEEF
+Base 2: 11011110101011011011111011101111
+Base 8: 33653337357
+Base 10: 3735928559
+Base 16: DEADBEEF
+Expression (base 10): 1+5*2
+Result (base 10): 11
+Expression (base 10): 4*2/5
+Result (base 10): 1
+Expression (base 10): 9/3-1
+Result (base 10): 2
+Expression (base 10): 3+1*22
+Result (base 10): 25
+Expression (base 10): 12*2
+Result (base 10): 24
+Expression (base 16): A*A-1
+Result (base 16): 63
+Expression (base 16): DEADBEEF
+Result (base 16): DEADBEEF
+Thanks for using uqbasejump.

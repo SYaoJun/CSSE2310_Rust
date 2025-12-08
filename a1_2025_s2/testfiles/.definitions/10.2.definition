@@ -1,0 +1,13 @@
+# Details for test 10.2.
+# $1 will be run_test, explain_test or mark_test.
+function test10.2() {
+    "$1" 10.2 "backspace_stdin02" \
+        "Check uqbasejump operates correctly when backspace is pressed to remove characters from a number with multiple backspace presses" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/10.2.in" \
+        --exit 0 \
+        --stdout testfiles/10.2.stdout \
+        --stderr testfiles/empty \
+        "./uqbasejump" 
+}

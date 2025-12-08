@@ -1,0 +1,13 @@
+# Details for test 2.3.
+# $1 will be run_test, explain_test or mark_test.
+function test2.3() {
+    "$1" 2.3 "invalid_files03" \
+        "Check uqbasejump reports a file error with argument(s) '--inputfile --inputfile'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 16 \
+        --stdout testfiles/empty \
+        --stderr testfiles/2.3.stderr \
+        "./uqbasejump" '--inputfile' '--inputfile'
+}
