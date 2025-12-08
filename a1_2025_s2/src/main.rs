@@ -26,7 +26,7 @@ const PRINT_EXPRESSION_STR_BASE: &str = "Expression (base %s): %s\n";
 const PRINT_RESULT_STRBASE: &str = "Result (base %s): %s\n";
 const EXPRESSION_ERROR: &str = "Can't evaluate the expression \"%s\"\n";
 
-const WELCOME_MESSAGE: &str = "Welcome to uqbasejump!\n";
+const WELCOME_MESSAGE: &str = "Welcome to uqbasejump!\n@yaojun wrote this program.\n";
 const WELCOME_INPUT_BASE: &str = "Input base set to: ";
 const WELCOME_OUTPUT_BASE: &str = "Output bases: ";
 const WELCOME_LAST_LINE: &str = "Please enter your numbers and expressions.\n";
@@ -242,10 +242,7 @@ fn process_file<R: BufRead>(mut reader: R, args: &Arguments) -> Result<()> {
 fn process_stdin(args: &Arguments) -> Result<()> {
     let mut input_expr = InputExpr::default();
     let stdin = io::stdin();
-    let mut stdout = io::stdout();
     loop {
-        print!("> ");
-        stdout.flush()?;
         let mut buffer = String::new();
         let read = stdin.read_line(&mut buffer)?;
         if read == 0 {

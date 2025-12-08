@@ -15,5 +15,6 @@ If you want to use this code, please contact the author.
 
 ## Usage
 ```sh
+cd a1_2024_s2
 ./testa1_rust.sh
 ```
