@@ -6,8 +6,8 @@ use std::process::exit;
 
 use a1_2024_s2::utils::log::init_logging;
 use anyhow::Result;
-use thiserror::Error;
 use log;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 enum ExitError {
@@ -50,8 +50,6 @@ enum ExitCodes {
 fn log2(x: f64) -> f64 {
     x.log2()
 }
-
-
 
 fn calculate_entropy(password: &str) -> f64 {
     let mut has_lower = false;
@@ -106,13 +104,19 @@ fn check_password_is_valid(password: &str) -> bool {
         return false;
     }
     // 只允许可打印的ASCII字符，不包括控制字符
-    password.chars().all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace())
+    password
+        .chars()
+        .all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace())
 }
 #[warn(clippy::too_many_lines)]
 fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config) {
     let mut error_occurred = false;
     // 打印文件数量
-    log::info!("Reading {} file{}", filenames.len(), if filenames.len() == 1 {""} else {"s"});
+    log::info!(
+        "Reading {} file{}",
+        filenames.len(),
+        if filenames.len() == 1 { "" } else { "s" }
+    );
     for fname in filenames {
         if let Err(_) = read_single_file(fname, passwords, config) {
             error_occurred = true;
@@ -123,11 +127,15 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config)
     }
 }
 
-fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Config) -> Result<(), ()> {
+fn read_single_file(
+    fname: &String,
+    passwords: &mut Vec<String>,
+    _config: &Config,
+) -> Result<(), ()> {
     let file = File::open(fname).map_err(|_| {
         eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
     })?;
-    
+
     let reader = BufReader::new(file);
     let mut has_valid_password = false;
     let mut invalid_lines = 0;
@@ -138,10 +146,10 @@ fn read_single_file(fname: &String, passwords: &mut Vec<String>, _config: &Confi
             Ok(line) => {
                 if process_line(&line.trim(), passwords, fname) {
                     has_valid_password = true;
-                }else{
+                } else {
                     invalid_lines += 1;
                 }
-            },
+            }
             Err(_) => {
                 eprintln!("uqentropy: error reading file \"{}\"", fname);
                 return Err(());
@@ -169,7 +177,7 @@ fn process_line(line: &str, passwords: &mut Vec<String>, fname: &str) -> bool {
             return false;
         }
     }
-    
+
     let mut has_valid_password = false;
     // 分割行并添加非空密码
     for token in line.split_whitespace() {
@@ -187,7 +195,6 @@ fn floor_to_one_decimal(x: f64) -> f64 {
     (x * 10.0).floor() / 10.0
 }
 
-
 /// 计算字符串中字母的数量
 fn get_letter_count(s: &str) -> i32 {
     let mut count = 0;
@@ -199,11 +206,14 @@ fn get_letter_count(s: &str) -> i32 {
     count
 }
 
-fn do_basic_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> { 
+fn do_basic_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> {
     for (i, pwd) in passwords.iter().enumerate() {
         *password_scale += 1;
         if pwd == password {
-            println!("Candidate password would be matched on guess number {}", i + 1);
+            println!(
+                "Candidate password would be matched on guess number {}",
+                i + 1
+            );
             std::io::stdout().flush().unwrap();
             return Some(log2(2.0 * (i + 1) as f64));
         }
@@ -217,25 +227,26 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
     if let Some(entropy) = do_basic_match(password, passwords, &mut password_scale) {
         return entropy;
     }
-    
+
     // --case
     if config.case_sensitive {
-        if let Some(entropy) = check_case_match(password, passwords,  &mut password_scale) {
+        if let Some(entropy) = check_case_match(password, passwords, &mut password_scale) {
             return entropy;
         }
     }
-    
-    
+
     // --digit-append
     if config.digit_append {
-        if let Some(entropy) = check_digit_append_match(password, passwords, config, &mut password_scale) {
+        if let Some(entropy) =
+            check_digit_append_match(password, passwords, config, &mut password_scale)
+        {
             return entropy;
         }
     }
-    
+
     // --double-check
     if config.double_check {
-        if let Some(entropy) = check_double_match(password, passwords,  &mut password_scale) {
+        if let Some(entropy) = check_double_match(password, passwords, &mut password_scale) {
             return entropy;
         }
     }
@@ -246,46 +257,59 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
             return entropy;
         }
     }
-    
+
     // If no match found, return a large value
-    println!("No match would be found after checking {} passwords", password_scale);
+    println!(
+        "No match would be found after checking {} passwords",
+        password_scale
+    );
     std::io::stdout().flush().unwrap();
     f64::MAX
 }
 
-
-fn check_case_match(password: &str, passwords: &[String],  password_scale: &mut i32) -> Option<f64> {
-    
-        for (_i, pwd) in passwords.iter().enumerate() {
-            let letter_count = get_letter_count(pwd);
-            *password_scale += 2_i32.pow(letter_count as u32) - 1;
-            if pwd.to_uppercase() == password.to_uppercase() {
-                println!("Candidate password would be matched on guess number {}", *password_scale);
-                std::io::stdout().flush().unwrap();
-                return Some(log2(2.0 * (*password_scale as f64)));
-            }
+fn check_case_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> {
+    for (_i, pwd) in passwords.iter().enumerate() {
+        let letter_count = get_letter_count(pwd);
+        *password_scale += 2_i32.pow(letter_count as u32) - 1;
+        if pwd.to_uppercase() == password.to_uppercase() {
+            println!(
+                "Candidate password would be matched on guess number {}",
+                *password_scale
+            );
+            std::io::stdout().flush().unwrap();
+            return Some(log2(2.0 * (*password_scale as f64)));
         }
-    
+    }
+
     None
 }
-fn dfs(password: &str, leet_map: &HashMap<char, &str>, pwd_chars: &mut [char], index: usize) -> bool {
+fn dfs(
+    password: &str,
+    leet_map: &HashMap<char, &str>,
+    pwd_chars: &mut [char],
+    index: usize,
+) -> bool {
     if index == pwd_chars.len() {
         // 打印当前的字符串pwd_chars
-        log::info!("transformed pwd: {}, target password: {}", pwd_chars.iter().collect::<String>(), password);
+        log::info!(
+            "transformed pwd: {}, target password: {}",
+            pwd_chars.iter().collect::<String>(),
+            password
+        );
         return pwd_chars.iter().collect::<String>() == password;
     }
 
     let current_char = pwd_chars[index];
-    
+
     if let Some(replacements) = leet_map.get(&current_char) {
         for leet_char in replacements.chars() {
             let original = pwd_chars[index];
             pwd_chars[index] = leet_char;
-            
+
             if dfs(password, leet_map, pwd_chars, index + 1) {
                 return true;
             }
-            
+
             pwd_chars[index] = original;
         }
     }
@@ -297,23 +321,44 @@ fn dfs(password: &str, leet_map: &HashMap<char, &str>, pwd_chars: &mut [char], i
     return false;
 }
 
-fn check_leet_match(password: &str, passwords: &[String], _config: &Config, password_scale: &mut i32) -> Option<f64> {
+fn check_leet_match(
+    password: &str,
+    passwords: &[String],
+    _config: &Config,
+    password_scale: &mut i32,
+) -> Option<f64> {
     // 修复：使用正确的 HashMap 构造方式，移除重复键
     let leet_map: HashMap<char, &str> = HashMap::from([
-        ('a', "4@"), ('b', "68"), ('e', "3"), ('g', "69"), 
-        ('i', "1!"), ('l', "1"), ('o', "0"), ('s', "5$"), 
-        ('t', "7+"), ('x', "%"), ('z', "2"), 
+        ('a', "4@"),
+        ('b', "68"),
+        ('e', "3"),
+        ('g', "69"),
+        ('i', "1!"),
+        ('l', "1"),
+        ('o', "0"),
+        ('s', "5$"),
+        ('t', "7+"),
+        ('x', "%"),
+        ('z', "2"),
         // 移除了大写字母的重复映射，因为 chars() 是大小写敏感的
-        ('A', "4@"), ('B', "68"), ('E', "3"), ('G', "69"), 
-        ('I', "1!"), ('L', "1"), ('O', "0"), ('S', "5$"), 
-        ('T', "7+"), ('X', "%"), ('Z', "2"),
+        ('A', "4@"),
+        ('B', "68"),
+        ('E', "3"),
+        ('G', "69"),
+        ('I', "1!"),
+        ('L', "1"),
+        ('O', "0"),
+        ('S', "5$"),
+        ('T', "7+"),
+        ('X', "%"),
+        ('Z', "2"),
     ]);
-    
+
     for pwd in passwords {
         let mut power_one = 0;
         let mut power_two = 0;
         let len = pwd.len();
-        
+
         // 修复：使用更安全的方式遍历字符
         for c in pwd.chars() {
             if let Some(value) = leet_map.get(&c) {
@@ -323,30 +368,34 @@ fn check_leet_match(password: &str, passwords: &[String], _config: &Config, pass
                 }
             }
         }
-        
+
         if power_one + power_two == 0 {
             continue;
         }
-        
+
         // 修复：避免整数溢出，使用 checked_pow
-        let scale_increment = 2_i32.checked_pow(power_one as u32)
+        let scale_increment = 2_i32
+            .checked_pow(power_one as u32)
             .and_then(|x| x.checked_mul(3_i32.checked_pow(power_two as u32)?))
             .and_then(|x| x.checked_sub(1))
             .unwrap_or(i32::MAX); // 处理溢出情况
-        
+
         *password_scale = password_scale.saturating_add(scale_increment);
         log::info!("current scale: {}, pwd: {}", *password_scale, pwd);
         if len != password.len() {
             continue;
         }
-        
+
         // 将字典密码转换为可变的char数组，以便进行leet变换
         let mut pwd_chars: Vec<char> = pwd.chars().collect();
         log::info!("dict pwd: {}", pwd);
-        
+
         // 调用dfs函数，将字典密码进行leet变换，然后与目标密码比较
         if dfs(password, &leet_map, &mut pwd_chars, 0) {
-            println!("Candidate password would be matched on guess number {}", *password_scale);
+            println!(
+                "Candidate password would be matched on guess number {}",
+                *password_scale
+            );
             std::io::stdout().flush().unwrap();
             return Some(log2(2.0 * (*password_scale as f64)));
         }
@@ -354,49 +403,63 @@ fn check_leet_match(password: &str, passwords: &[String], _config: &Config, pass
     None
 }
 
-fn check_digit_append_match(password: &str, passwords: &[String], config: &Config, password_scale: &mut i32) -> Option<f64> {
+fn check_digit_append_match(
+    password: &str,
+    passwords: &[String],
+    config: &Config,
+    password_scale: &mut i32,
+) -> Option<f64> {
     let power_table = [10, 100, 1000, 10000, 100000, 1000000, 10000000];
-    
+
     for (_i, pwd) in passwords.iter().enumerate() {
-       let  last_char = pwd.chars().last()?;
-       if !last_char.is_ascii_digit() {
-           for j in 0..config.num_digits {
-             for value in 0..power_table[j] {
-                 let digit_append = format!("{:0width$}", value, width=j+1);
-                 let new_pwd = format!("{}{}", pwd, digit_append);
-                 *password_scale += 1;
-                 if new_pwd == password {
-                     println!("Candidate password would be matched on guess number {}", *password_scale);
-                     return Some(log2(2.0 * (*password_scale as f64)));
-                 }
-               }
-           }
-       }
+        let last_char = pwd.chars().last()?;
+        if !last_char.is_ascii_digit() {
+            for j in 0..config.num_digits {
+                for value in 0..power_table[j] {
+                    let digit_append = format!("{:0width$}", value, width = j + 1);
+                    let new_pwd = format!("{}{}", pwd, digit_append);
+                    *password_scale += 1;
+                    if new_pwd == password {
+                        println!(
+                            "Candidate password would be matched on guess number {}",
+                            *password_scale
+                        );
+                        return Some(log2(2.0 * (*password_scale as f64)));
+                    }
+                }
+            }
+        }
     }
     None
 }
 
-fn check_double_match(password: &str, passwords: &[String],  password_scale: &mut i32) -> Option<f64> {
+fn check_double_match(
+    password: &str,
+    passwords: &[String],
+    password_scale: &mut i32,
+) -> Option<f64> {
     for (_i, first) in passwords.iter().enumerate() {
-         let len1 = first.len();
-         if len1 > password.len() || !password.starts_with(first) {
+        let len1 = first.len();
+        if len1 > password.len() || !password.starts_with(first) {
             *password_scale += passwords.len() as i32;
             continue;
-         }
-       for (_j, second) in passwords.iter().enumerate(){
-             *password_scale += 1;
-            
-             let len2 = second.len();
-             if len1 + len2 != password.len() {
-                 continue;
-             }
-             let new_pwd = format!("{}{}", first, second);
-             if new_pwd == password {
-                 println!("Candidate password would be matched on guess number {}", *password_scale);
-                 return Some(log2(2.0 * (*password_scale as f64)));
-             }
-         
-       }
+        }
+        for (_j, second) in passwords.iter().enumerate() {
+            *password_scale += 1;
+
+            let len2 = second.len();
+            if len1 + len2 != password.len() {
+                continue;
+            }
+            let new_pwd = format!("{}{}", first, second);
+            if new_pwd == password {
+                println!(
+                    "Candidate password would be matched on guess number {}",
+                    *password_scale
+                );
+                return Some(log2(2.0 * (*password_scale as f64)));
+            }
+        }
     }
     None
 }
@@ -404,13 +467,15 @@ fn check_double_match(password: &str, passwords: &[String],  password_scale: &mu
 fn main() {
     // 初始化日志系统
     init_logging();
-    
+
     let args: Vec<String> = env::args().collect();
     // 把错误传播到最外层，统一处理
     let (config, filenames, file_present) = parse_arguments(&args);
-    
+
     // 当使用选项时必须提供文件
-    if (config.leet || config.case_sensitive || config.digit_append || config.double_check) && filenames.is_empty() {
+    if (config.leet || config.case_sensitive || config.digit_append || config.double_check)
+        && filenames.is_empty()
+    {
         eprintln!("{}", USAGE_MSG);
         exit(ExitCodes::Usage as i32);
     }
@@ -480,10 +545,10 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
     println!("Enter candidate passwords to check their strength.");
     // flush
     std::io::stdout().flush().unwrap();
-    
+
     let stdin = io::stdin();
     let mut count_strong = 0;
-    
+
     for line_result in stdin.lock().lines() {
         match line_result {
             Ok(line) => {
@@ -493,7 +558,7 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
                     eprintln!("Password is invalid");
                     continue;
                 }
-                
+
                 let mut entropy = calculate_entropy(password);
                 if file_present {
                     let entropy_two = calculate_entropy_two(password, passwords, config);
@@ -510,7 +575,7 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
                 );
                 println!("Password strength rating: {}", map_to_strength(entropy));
                 std::io::stdout().flush().unwrap();
-            },
+            }
             Err(_) => {
                 break;
             }
@@ -525,9 +590,8 @@ fn process_user_input(config: &Config, passwords: &[String], file_present: bool)
     }
 }
 
-
 #[cfg(test)]
-mod tests { 
+mod tests {
     use super::*;
     #[test]
     fn test_calculate_entropy() {
@@ -537,6 +601,9 @@ mod tests {
     #[test]
     fn test_calculate_entropy_two() {
         let passwords = vec!["<PASSWORD>".to_string(), "123456".to_string()];
-        assert_eq!(calculate_entropy_two("password", &passwords, &Config::new()), f64::MAX);
+        assert_eq!(
+            calculate_entropy_two("password", &passwords, &Config::new()),
+            f64::MAX
+        );
     }
 }

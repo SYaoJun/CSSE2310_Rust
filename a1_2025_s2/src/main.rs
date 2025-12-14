@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
 use std::env;
 use std::fs::File;
+use std::io::Read;
 use std::io::{self, BufRead, BufReader, Write};
 use std::num::ParseIntError;
-use std::io::Read;
 
 use anyhow::{bail, Result};
 use thiserror::Error;
@@ -49,7 +49,7 @@ enum ExitError {
     File(String),
 }
 
-enum ExitCode{
+enum ExitCode {
     UsageExit = 7,
     FileExit = 16,
 }
@@ -387,11 +387,15 @@ fn handle_command_line(input_expr: &mut InputExpr, args: &Arguments, line: &str)
             for (expr, result, base) in &input_expr.history {
                 println!(
                     "{}",
-                    PRINT_EXPRESSION_STR_BASE.replace("%s", &base.to_string()).replace("%s", expr)
+                    PRINT_EXPRESSION_STR_BASE
+                        .replace("%s", &base.to_string())
+                        .replace("%s", expr)
                 );
                 println!(
                     "{}",
-                    PRINT_RESULT_STRBASE.replace("%s", &base.to_string()).replace("%s", result)
+                    PRINT_RESULT_STRBASE
+                        .replace("%s", &base.to_string())
+                        .replace("%s", result)
                 );
             }
         }
@@ -421,7 +425,9 @@ fn process_expression(input_expr: &mut InputExpr, args: &Arguments) -> Result<()
     let result_converted = convert_int_to_str_any_base(result, args.input_base);
     println!("Result (base {}): {}", args.input_base, result_converted);
     print_in_bases(result, args);
-    input_expr.history.push((expr_converted, result_converted, args.input_base));
+    input_expr
+        .history
+        .push((expr_converted, result_converted, args.input_base));
     input_expr.expr.clear();
     input_expr.input.clear();
     Ok(())

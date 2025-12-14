@@ -1,15 +1,12 @@
-use std::fs;
-use log;
 use env_logger;
+use log;
+use std::fs;
 /// 初始化日志系统，创建带时间戳的日志文件
 pub fn init_logging() {
     // 创建log目录（如果不存在）
     fs::create_dir_all("log").expect("无法创建log目录");
 
-    let the_time = chrono::Local::now()
-        .format("%Y_%m_%d_%H:%M:%S")
-        .to_string();
-
+    let the_time = chrono::Local::now().format("%Y_%m_%d_%H:%M:%S").to_string();
 
     // 构造日志文件路径
     let log_file_path = format!("log/uqentropy_{}.log", the_time);
