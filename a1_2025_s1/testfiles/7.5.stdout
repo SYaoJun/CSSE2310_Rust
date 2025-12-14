@@ -1,0 +1,13 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+golden = 1.618
+qwerty = 5
+There are no loop variables.
+hi = 33.33
+Result = 33.33
+qwerty = 2
+Result = 1.117e+203
+hi = 16.67
+qwerty = 50.53
+Thank you for using uqexpr.

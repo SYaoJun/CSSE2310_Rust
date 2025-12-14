@@ -1,0 +1,13 @@
+# Details for test 8.1.
+# $1 will be run_test, explain_test or mark_test.
+function test8.1() {
+    "$1" 8.1 "significant_figures01" \
+        "Check uqexpr with --significantfigures argument handles the minimum --significantfigures value" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/8.1.in" \
+        --exit 0 \
+        --stdout testfiles/8.1.stdout \
+        --stderr testfiles/8.1.stderr \
+        "./uqexpr" '--significantfigures' '2'
+}

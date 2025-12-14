@@ -1,0 +1,9 @@
+@loop
+@loop x
+x
+  @loop x x
+x
+@loop  x y
+x
+@ loop y y
+y

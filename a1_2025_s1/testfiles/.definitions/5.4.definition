@@ -1,0 +1,13 @@
+# Details for test 5.4.
+# $1 will be run_test, explain_test or mark_test.
+function test5.4() {
+    "$1" 5.4 "no_cmd_line_args04" \
+        "Check uqexpr operates correctly with a long expression with multiple numbers, constants and a function" \
+        --timeout 10 \
+        --maxattempts 1 \
+        --stdin "testfiles/5.4.in" \
+        --exit 0 \
+        --stdout testfiles/5.4.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" 
+}

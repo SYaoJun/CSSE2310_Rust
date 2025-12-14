@@ -1,0 +1,9 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+a = 10.12
+A = -900.9
+Loop variables:
+xxAq = 6 (6, 66, 1e+06)
+Please enter your expressions and assignment operations to be evaluated.
+Thank you for using uqexpr.

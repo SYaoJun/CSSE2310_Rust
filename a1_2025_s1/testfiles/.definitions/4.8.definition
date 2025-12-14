@@ -1,0 +1,13 @@
+# Details for test 4.8.
+# $1 will be run_test, explain_test or mark_test.
+function test4.8() {
+    "$1" 4.8 "startup_message08" \
+        "Check startup message is printed with argument(s) '--forloop xxAq,6,66,999999 --init a=10.1234 --init A=-900.8642'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.8.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--forloop' 'xxAq,6,66,999999' '--init' 'a=10.1234' '--init' 'A=-900.8642'
+}

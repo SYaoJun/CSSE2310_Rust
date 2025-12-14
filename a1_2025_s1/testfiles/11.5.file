@@ -1,0 +1,6 @@
+x
+y
+@loop x y = x
+@range z,1,1,2
+@loop y y + 1
+@loop z x = z

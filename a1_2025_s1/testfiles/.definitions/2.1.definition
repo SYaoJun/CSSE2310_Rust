@@ -1,0 +1,13 @@
+# Details for test 2.1.
+# $1 will be run_test, explain_test or mark_test.
+function test2.1() {
+    "$1" 2.1 "invalid_files01" \
+        "Check uqexpr reports a file error with argument(s) '/non/existent/file/path'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 5 \
+        --stdout testfiles/empty \
+        --stderr testfiles/2.1.stderr \
+        "./uqexpr" '/non/existent/file/path'
+}

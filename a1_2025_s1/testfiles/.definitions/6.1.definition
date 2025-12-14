@@ -1,0 +1,13 @@
+# Details for test 6.1.
+# $1 will be run_test, explain_test or mark_test.
+function test6.1() {
+    "$1" 6.1 "input_file01" \
+        "Check uqexpr operates correctly with a single number" \
+        --timeout 10 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/6.1.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" 'testfiles/6.1.file'
+}

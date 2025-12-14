@@ -1,0 +1,17 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+No variables were identified.
+Loop variables:
+x = 1 (1, 1, 10)
+Please enter your expressions and assignment operations to be evaluated.
+a = 1 when x = 1
+a = 4 when x = 2
+a = 9 when x = 3
+a = 16 when x = 4
+a = 25 when x = 5
+a = 36 when x = 6
+a = 49 when x = 7
+a = 64 when x = 8
+a = 81 when x = 9
+a = 100 when x = 10
+Thank you for using uqexpr.

@@ -3,10 +3,19 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
-use std::fs;
-use log;
-use env_logger;
 
+use a1_2024_s2::utils::log::init_logging;
+use anyhow::Result;
+use thiserror::Error;
+use log;
+
+#[derive(Debug, Error)]
+enum ExitError {
+    #[error("usage")]
+    Usage,
+    #[error("file")]
+    File(String),
+}
 struct Config {
     leet: bool,
     case_sensitive: bool,
@@ -42,37 +51,7 @@ fn log2(x: f64) -> f64 {
     x.log2()
 }
 
-/// 初始化日志系统，创建带时间戳的日志文件
-fn init_logging() {
-    // 创建log目录（如果不存在）
-    fs::create_dir_all("log").expect("无法创建log目录");
-    
-    let the_time = chrono::Local::now()
-        .format("%Y_%m_%d_%H:%M:%S")
-        .to_string();
 
-
-    // 构造日志文件路径
-    let log_file_path = format!("log/uqentropy_{}.log", the_time);
-    
-    // 设置环境变量以配置env_logger
-    std::env::set_var("RUST_LOG", "debug");
-    
-    // 初始化env_logger并设置输出到文件
-    let log_file = fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(&log_file_path)
-        .expect("无法创建日志文件");
-    
-    env_logger::builder()
-        .target(env_logger::Target::Pipe(Box::new(log_file)))
-        .format_timestamp_secs()
-        .init();
-    
-    log::info!("日志系统已初始化，日志文件: {}", log_file_path);
-}
 
 fn calculate_entropy(password: &str) -> f64 {
     let mut has_lower = false;
@@ -421,11 +400,13 @@ fn check_double_match(password: &str, passwords: &[String],  password_scale: &mu
     }
     None
 }
+
 fn main() {
     // 初始化日志系统
     init_logging();
     
     let args: Vec<String> = env::args().collect();
+    // 把错误传播到最外层，统一处理
     let (config, filenames, file_present) = parse_arguments(&args);
     
     // 当使用选项时必须提供文件
@@ -442,6 +423,7 @@ fn main() {
     process_user_input(&config, &passwords, file_present);
 }
 
+// 这里返回的是三元组
 fn parse_arguments(args: &[String]) -> (Config, Vec<String>, bool) {
     let mut filenames = Vec::new();
     let mut config = Config::new();
@@ -449,6 +431,7 @@ fn parse_arguments(args: &[String]) -> (Config, Vec<String>, bool) {
     let mut i = 1;
     let mut file_present = false;
     while i < args.len() {
+        // 这里 match用得妙呀
         match args[i].as_str() {
             "--leet" => config.leet = true,
             "--case" => config.case_sensitive = true,

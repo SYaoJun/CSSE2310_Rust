@@ -1,0 +1,13 @@
+# Details for test 7.5.
+# $1 will be run_test, explain_test or mark_test.
+function test7.5() {
+    "$1" 7.5 "non_loop_variables05" \
+        "Check uqexpr with --init argument handles two dynamic non-loop variables from an input file - including redefining a variable initialised on the command line" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/7.5.stdout \
+        --stderr testfiles/7.5.stderr \
+        "./uqexpr" '--init' 'golden=1.618' '--init' 'qwerty=5' 'testfiles/7.5.file'
+}

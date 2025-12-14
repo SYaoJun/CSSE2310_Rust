@@ -1,0 +1,40 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+No variables were identified.
+Loop variables:
+x = 1 (1, 2, 11)
+Please enter your expressions and assignment operations to be evaluated.
+Result = 1
+Result = 2 when x = 1
+Result = 4 when x = 3
+Result = 6 when x = 5
+Result = 8 when x = 7
+Result = 10 when x = 9
+Result = 12 when x = 11
+Result = 11
+x = 10 (10, -1, 1)
+Result = 10
+Result = 31.42 when x = 10
+Result = 28.27 when x = 9
+Result = 25.13 when x = 8
+Result = 21.99 when x = 7
+Result = 18.85 when x = 6
+Result = 15.71 when x = 5
+Result = 12.57 when x = 4
+Result = 9.425 when x = 3
+Result = 6.283 when x = 2
+Result = 3.142 when x = 1
+Result = 1
+Result = 1
+Result = 10 when x = 10
+Result = 9 when x = 9
+Result = 8 when x = 8
+Result = 7 when x = 7
+Result = 6 when x = 6
+Result = 5 when x = 5
+Result = 4 when x = 4
+Result = 3 when x = 3
+Result = 2 when x = 2
+Result = 1 when x = 1
+Result = 1
+Thank you for using uqexpr.

@@ -1,0 +1,13 @@
+# Details for test 4.5.
+# $1 will be run_test, explain_test or mark_test.
+function test4.5() {
+    "$1" 4.5 "startup_message05" \
+        "Check startup message is printed with argument(s) '--forloop u,-20,-1,-100 --init U=5.2342234'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.5.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--forloop' 'u,-20,-1,-100' '--init' 'U=5.2342234'
+}

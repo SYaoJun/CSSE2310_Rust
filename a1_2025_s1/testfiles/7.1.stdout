@@ -1,0 +1,10 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+a = 4
+There are no loop variables.
+Please enter your expressions and assignment operations to be evaluated.
+Result = 4
+a = 72
+a = 75
+Thank you for using uqexpr.

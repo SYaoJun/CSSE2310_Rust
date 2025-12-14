@@ -1,5 +1,5 @@
 [package]
-name = "a1"
+name = "a1_2024_s2"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,6 +11,8 @@ path = "src/bin/uqentropy.rs"
 log = "0.4"
 env_logger = "0.9"
 chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2.0.17"
+anyhow = "1.0.100"
 
 [lints.clippy]
 too_many_lines = "warn"
