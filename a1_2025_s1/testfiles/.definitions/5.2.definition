@@ -1,0 +1,13 @@
+# Details for test 5.2.
+# $1 will be run_test, explain_test or mark_test.
+function test5.2() {
+    "$1" 5.2 "no_cmd_line_args02" \
+        "Check uqexpr operates correctly with a single operation and multiple spaces in between" \
+        --timeout 10 \
+        --maxattempts 1 \
+        --stdin "testfiles/5.2.in" \
+        --exit 0 \
+        --stdout testfiles/5.2.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" 
+}

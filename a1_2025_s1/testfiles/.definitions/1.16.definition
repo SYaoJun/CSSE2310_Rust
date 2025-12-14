@@ -1,0 +1,13 @@
+# Details for test 1.16.
+# $1 will be run_test, explain_test or mark_test.
+function test1.16() {
+    "$1" 1.16 "invalid_cmd_lines16" \
+        "Check uqexpr reports a usage error with argument(s) '--init x=1 --significantfigures 5 --forloop'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 18 \
+        --stdout testfiles/empty \
+        --stderr testfiles/1.16.stderr \
+        "./uqexpr" '--init' 'x=1' '--significantfigures' '5' '--forloop'
+}

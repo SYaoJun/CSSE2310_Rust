@@ -1,0 +1,13 @@
+# Details for test 1.11.
+# $1 will be run_test, explain_test or mark_test.
+function test1.11() {
+    "$1" 1.11 "invalid_cmd_lines11" \
+        "Check uqexpr reports a usage error with argument(s) '--significantfiguresa 5'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 18 \
+        --stdout testfiles/empty \
+        --stderr testfiles/1.11.stderr \
+        "./uqexpr" '--significantfiguresa' '5'
+}

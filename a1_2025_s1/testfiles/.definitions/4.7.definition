@@ -1,0 +1,13 @@
+# Details for test 4.7.
+# $1 will be run_test, explain_test or mark_test.
+function test4.7() {
+    "$1" 4.7 "startup_message07" \
+        "Check startup message is printed with argument(s) '--forloop xhW,-3.14,1,999999 --init xhw=-10000.11 --forloop x,-3.14,1,999999'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.7.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--forloop' 'xhW,-3.14,1,999999' '--init' 'xhw=-10000.11' '--forloop' 'x,-3.14,1,999999'
+}

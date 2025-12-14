@@ -1,0 +1,13 @@
+# Details for test 9.2.
+# $1 will be run_test, explain_test or mark_test.
+function test9.2() {
+    "$1" 9.2 "print_command02" \
+        "Check uqexpr operates correctly when given the @print command with multiple non-loop variables" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/9.2.in" \
+        --exit 0 \
+        --stdout testfiles/9.2.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--init' 'a=4' '--init' 'sdkf=-23.5' '--init' 'A=2323.111111134'
+}

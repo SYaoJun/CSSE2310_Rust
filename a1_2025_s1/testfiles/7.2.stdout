@@ -1,0 +1,14 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+a = 4
+sdkf = -23.5
+There are no loop variables.
+Please enter your expressions and assignment operations to be evaluated.
+Result = 4
+Result = -23.5
+Result = -7.167e+06
+a = -23.5
+sdkf = -23.5
+Result = 4
+Thank you for using uqexpr.

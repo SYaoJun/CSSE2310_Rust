@@ -1,0 +1,13 @@
+# Details for test 11.3.
+# $1 will be run_test, explain_test or mark_test.
+function test11.3() {
+    "$1" 11.3 "loop_variables03" \
+        "Check uqexpr operates correctly using the @range and @loop commands with a single loop variable defined on the command line - counting backwards and a single @loop command from a file - evaluating an assignment operation including the variable" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/11.3.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--forloop' 'x,10,-1,-5' 'testfiles/11.3.file'
+}

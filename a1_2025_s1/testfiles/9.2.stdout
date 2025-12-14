@@ -1,0 +1,26 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+a = 4
+sdkf = -23.5
+A = 2323
+There are no loop variables.
+Please enter your expressions and assignment operations to be evaluated.
+Variables:
+a = 4
+sdkf = -23.5
+A = 2323
+There are no loop variables.
+sdkf = 2.718
+Variables:
+a = 4
+sdkf = 2.718
+A = 2323
+There are no loop variables.
+a = 2.718
+Variables:
+a = 2.718
+sdkf = 2.718
+A = 2323
+There are no loop variables.
+Thank you for using uqexpr.

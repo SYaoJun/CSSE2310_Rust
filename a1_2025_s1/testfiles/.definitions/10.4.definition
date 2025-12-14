@@ -1,0 +1,13 @@
+# Details for test 10.4.
+# $1 will be run_test, explain_test or mark_test.
+function test10.4() {
+    "$1" 10.4 "multiple_options04" \
+        "Check uqexpr operates correctly when given multiple command line arguments and commands with muiltiple variables defined on command line and a variety of assignment operations to existing variables only on the input (from a file)" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/10.4.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--init' 'a=4' '--init' 'sdkf=-23.5' '--init' 'A=2323.111111134' 'testfiles/10.2.in'
+}

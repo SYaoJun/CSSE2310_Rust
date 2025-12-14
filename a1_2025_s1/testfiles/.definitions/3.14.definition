@@ -1,0 +1,13 @@
+# Details for test 3.14.
+# $1 will be run_test, explain_test or mark_test.
+function test3.14() {
+    "$1" 3.14 "invalid_variables14" \
+        "Check uqexpr reports invalid or duplicate variable errors with argument(s) '--forloop k,1,,5'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 14 \
+        --stdout testfiles/empty \
+        --stderr testfiles/3.14.stderr \
+        "./uqexpr" '--forloop' 'k,1,,5'
+}

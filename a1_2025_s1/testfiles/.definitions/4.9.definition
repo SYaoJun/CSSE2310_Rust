@@ -1,0 +1,13 @@
+# Details for test 4.9.
+# $1 will be run_test, explain_test or mark_test.
+function test4.9() {
+    "$1" 4.9 "startup_message09" \
+        "Check startup message is printed with argument(s) '--forloop sdflksdfj,25,0.0001,26.111 --init sfsgkkwnDdf=-0.001456 --init gh=-422323232323 --forloop xxAq,6,66,999999'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.9.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--forloop' 'sdflksdfj,25,0.0001,26.111' '--init' 'sfsgkkwnDdf=-0.001456' '--init' 'gh=-422323232323' '--forloop' 'xxAq,6,66,999999'
+}

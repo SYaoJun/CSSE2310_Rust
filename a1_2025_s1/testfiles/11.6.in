@@ -1,0 +1,12 @@
+x
+@loop x x+1
+x
+@range x,10,-1,1
+x
+@loop x x*pi
+x
+# Following is invalid
+@range x,1,0,1
+x
+@loop x x 
+x

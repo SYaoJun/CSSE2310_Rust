@@ -49,6 +49,10 @@ enum ExitError {
     File(String),
 }
 
+enum ExitCode{
+    UsageExit = 7,
+    FileExit = 16,
+}
 #[derive(Clone)]
 struct Arguments {
     input_base: u32,
@@ -68,11 +72,12 @@ fn main() {
         match err.downcast_ref::<ExitError>() {
             Some(ExitError::Usage) => {
                 eprint!("{USAGE_ERROR_MESSAGE}");
-                std::process::exit(7);
+                // TODO(yaojun): 不能有魔鬼数字
+                std::process::exit(ExitCode::UsageExit as i32);
             }
             Some(ExitError::File(path)) => {
                 eprint!("{}", FILE_ERROR_MESSAGE.replace("%s", path));
-                std::process::exit(16);
+                std::process::exit(ExitCode::FileExit as i32);
             }
             None => {
                 eprintln!("{err:#}");

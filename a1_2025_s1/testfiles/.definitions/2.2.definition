@@ -1,0 +1,13 @@
+# Details for test 2.2.
+# $1 will be run_test, explain_test or mark_test.
+function test2.2() {
+    "$1" 2.2 "invalid_files02" \
+        "Check uqexpr reports a file error with argument(s) '/etc/shadow'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 5 \
+        --stdout testfiles/empty \
+        --stderr testfiles/2.2.stderr \
+        "./uqexpr" '/etc/shadow'
+}

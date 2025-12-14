@@ -1,0 +1,4 @@
+@range y,,1,10
+@range z,1,1,
+ @range a,1,2,3
+@range  b,2,3,4

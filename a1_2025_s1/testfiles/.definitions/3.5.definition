@@ -1,0 +1,13 @@
+# Details for test 3.5.
+# $1 will be run_test, explain_test or mark_test.
+function test3.5() {
+    "$1" 3.5 "invalid_variables05" \
+        "Check uqexpr reports invalid or duplicate variable errors with argument(s) '--init var=================4.23'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 14 \
+        --stdout testfiles/empty \
+        --stderr testfiles/3.5.stderr \
+        "./uqexpr" '--init' 'var=================4.23'
+}

@@ -1,0 +1,12 @@
+Welcome to uqexpr.
+This program was written by @yaojun.
+Variables:
+a = 43.22
+b = 3.142
+There are no loop variables.
+Please enter your expressions and assignment operations to be evaluated.
+Result = 43.22
+Result = 3.142
+Result = 46.36
+Result = 426.6
+Thank you for using uqexpr.

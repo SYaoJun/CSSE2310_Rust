@@ -1,0 +1,13 @@
+# Details for test 4.2.
+# $1 will be run_test, explain_test or mark_test.
+function test4.2() {
+    "$1" 4.2 "startup_message02" \
+        "Check startup message is printed with argument(s) '--init ddsfqqDsdf=3.14'" \
+        --timeout 3 \
+        --maxattempts 1 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/4.2.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--init' 'ddsfqqDsdf=3.14'
+}

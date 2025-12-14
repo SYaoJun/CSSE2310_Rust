@@ -1,0 +1,13 @@
+# Details for test 7.3.
+# $1 will be run_test, explain_test or mark_test.
+function test7.3() {
+    "$1" 7.3 "non_loop_variables03" \
+        "Check uqexpr with --init argument handles three non-loop variables and no input file" \
+        --timeout 5 \
+        --maxattempts 1 \
+        --stdin "testfiles/7.3.in" \
+        --exit 0 \
+        --stdout testfiles/7.3.stdout \
+        --stderr testfiles/empty \
+        "./uqexpr" '--init' 'a=4' '--init' 'sdkf=-23.5' '--init' 'A=2323.111111134'
+}
