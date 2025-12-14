@@ -3,3 +3,4 @@ uqentropy
 log/**
 docs/book
 **/target
+**/log

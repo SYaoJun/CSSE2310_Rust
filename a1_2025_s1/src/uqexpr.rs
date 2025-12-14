@@ -14,7 +14,7 @@ enum ExitError {
 }
 #[derive(Debug)]
 enum ExitCodes {
-    Usage = 2,
+    Usage = 18,
     InvalidFile = 20,
     NoStrong = 14, // 确保NoStrong对应的值为14，与测试期望一致
 }
@@ -40,14 +40,49 @@ fn handle_command_line_arguments()->Result<Config, ExitError>{
     };
     let mut i = 1;
     let mut init_flag = false;
+    let mut figure_flag = false;
+    let mut forloop_flag = false;
    while i < args.len(){
-       if args[i].eq("--init"){
-           if init_flag{
-               return Err(ExitError::Usage);
-           }
-           init_flag = true;
-           i += 1;
+       if args[i].is_empty(){
+           return Err(ExitError::Usage);
        }
+       match args[i].as_str(){
+           "--init"=>{
+                    if i+1 < args.len(){
+                        return Err(ExitError::Usage);
+                    }
+                   if init_flag{
+                   return Err(ExitError::Usage);
+               }
+               init_flag = true;
+               i += 1;
+           }
+           "--significantfigures"=>{
+               if i+1 < args.len(){
+                        return Err(ExitError::Usage);
+                    }
+                   if figure_flag{
+                   return Err(ExitError::Usage);
+               }
+               figure_flag = true;
+               i += 1;
+           }
+           "--forloop"=>{
+               if i+1 < args.len(){
+                        return Err(ExitError::Usage);
+                    }
+                   if forloop_flag{
+                   return Err(ExitError::Usage);
+               }
+               forloop_flag = true;
+               i += 1;
+           }
+           _=>{
+
+               i+=1;
+           }
+       }
+
    }
     Ok(config)
 }
