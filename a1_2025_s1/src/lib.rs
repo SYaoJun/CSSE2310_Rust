@@ -62,7 +62,7 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 if figure_flag {
                     return Err(ExitError::Usage);
                 }
-                if has_leading_zero(&args[i + 1].as_str()) {
+                if has_leading_zero(args[i + 1].as_str()) {
                     return Err(ExitError::Usage);
                 }
                 figure_flag = true;
