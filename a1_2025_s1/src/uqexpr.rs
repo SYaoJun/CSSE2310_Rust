@@ -15,7 +15,12 @@ fn main() {
             "uqexpr: unable to read from input file \"{}\"",
             config.input_filename
         );
-        exit(ExitCodes::Usage as i32);
+        exit(ExitCodes::InvalidFile as i32);
     }
-    let _file_string = file_string_res.unwrap();
+    let file_string = file_string_res.unwrap();
+    let res = check_variable(config);
+    if res.is_err() {
+        eprintln!("{}", VARIABLE_MSG);
+        exit(ExitCodes::Variable as i32);
+    }
 }
