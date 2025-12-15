@@ -1,6 +1,6 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,12 +13,12 @@ pub enum ExitError {
 #[derive(Debug)]
 pub enum ExitCodes {
     Usage = 18,
-    InvalidFile = 20,
-    NoStrong = 14, // 确保NoStrong对应的值为14，与测试期望一致
+    InvalidFile = 5,
+    Variable = 14,
 }
 
 pub const USAGE_MSG: &str = "Usage: ./uqexpr [--init string] [--significantfigures 2..8] [--forloop string] [inputfilename]";
-
+pub const VARIABLE_MSG: &str = "uqexpr: invalid variable(s) were specified";
 // 是不是可以自己定义错误处理枚举类型
 pub struct Config {
     pub init_string: String,
@@ -98,6 +98,7 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 if filename_flag {
                     return Err(ExitError::Usage);
                 }
+                config.input_filename = args[i].clone();
                 filename_flag = true;
                 i += 1;
             }
@@ -137,4 +138,12 @@ pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError>
         }
     }
     Err(ExitError::File)
+}
+
+pub fn check_variable(config: Config) -> Result<(), ExitError> {
+    let init_string = config.init_string;
+    let significant_figures = config.significant_figures;
+    let for_loop = config.for_loop;
+    let input_filename = config.input_filename;
+    Ok(())
 }

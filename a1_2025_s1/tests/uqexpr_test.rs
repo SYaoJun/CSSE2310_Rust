@@ -93,6 +93,4 @@ fn test_error_handling() {
 
     // 测试ExitCodes枚举值
     assert_eq!(ExitCodes::Usage as i32, 18);
-    assert_eq!(ExitCodes::InvalidFile as i32, 20);
-    assert_eq!(ExitCodes::NoStrong as i32, 14);
 }

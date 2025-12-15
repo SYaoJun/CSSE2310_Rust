@@ -111,14 +111,14 @@ show_diff() {
 }
 
 # Compile the program (workspace member a1_2025_s2, binary name matches package)
-cargo build -p a1_2025_s2 --bin a1_2025_s2 &> /dev/null
+cargo build -p a1_2025_s2 --bin uqbasejump &> /dev/null
 if [ $? -ne 0 ]; then
     echo "Compilation failed"
     exit 1
 fi
 
 # Copy/rename the built binary to the expected test name
-cp ../target/debug/a1_2025_s2 ./uqbasejump
+cp ../target/debug/uqbasejump ./uqbasejump
 # 拷贝是否成功判断
 if [ $? -ne 0 ]; then
     echo "Failed to copy uqbasejump executable"

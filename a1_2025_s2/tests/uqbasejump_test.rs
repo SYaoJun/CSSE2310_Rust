@@ -7,7 +7,7 @@ use tempfile::NamedTempFile;
 
 #[test]
 fn test_welcome_message() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.assert()
         .stdout(predicate::str::contains("Welcome to uqbasejump!"))
         .stdout(predicate::str::contains("Input base set to: 10"))
@@ -21,7 +21,7 @@ fn test_welcome_message() {
 
 #[test]
 fn test_single_number() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("42\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): "))
@@ -35,7 +35,7 @@ fn test_single_number() {
 #[test]
 fn test_basic_arithmetic() {
     // Addition
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10+5\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10+5"))
@@ -46,7 +46,7 @@ fn test_basic_arithmetic() {
         .success();
 
     // Subtraction
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10-5\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10-5"))
@@ -57,7 +57,7 @@ fn test_basic_arithmetic() {
         .success();
 
     // Multiplication
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10*5\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10*5"))
@@ -68,7 +68,7 @@ fn test_basic_arithmetic() {
         .success();
 
     // Division
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10/5\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10/5"))
@@ -81,7 +81,7 @@ fn test_basic_arithmetic() {
 
 #[test]
 fn test_operator_precedence() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("2+3*4\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 2+3*4"))
@@ -91,7 +91,7 @@ fn test_operator_precedence() {
         .stdout(predicate::str::contains("Base 16: E"))
         .success();
 
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("2*3+4\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 2*3+4"))
@@ -101,7 +101,7 @@ fn test_operator_precedence() {
         .stdout(predicate::str::contains("Base 16: A"))
         .success();
 
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10-5/5\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10-5/5"))
@@ -114,7 +114,7 @@ fn test_operator_precedence() {
 
 #[test]
 fn test_large_number() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("123456789\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input (base 10): 123456789"))
@@ -126,7 +126,7 @@ fn test_large_number() {
 
 #[test]
 fn test_binary_input() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("2").write_stdin("1010\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input base set to: 2"))
@@ -139,7 +139,7 @@ fn test_binary_input() {
 
 #[test]
 fn test_hex_input() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("16").write_stdin("FF\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input base set to: 16"))
@@ -153,7 +153,7 @@ fn test_hex_input() {
 #[test]
 fn test_custom_output_bases() {
     // Test with base 8
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--obases").arg("8").write_stdin("10\n");
     cmd.assert()
         .stdout(predicate::str::contains("Output bases: 8"))
@@ -161,7 +161,7 @@ fn test_custom_output_bases() {
         .success();
 
     // Test with multiple bases
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--obases").arg("3,7,10").write_stdin("20\n");
     cmd.assert()
         .stdout(predicate::str::contains("Output bases: 3, 7, 10"))
@@ -179,7 +179,7 @@ fn test_input_file() {
     writeln!(temp_file, "3*7").unwrap();
     temp_file.flush().unwrap();
 
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inputfile")
         .arg(temp_file.path().to_str().unwrap());
     cmd.assert()
@@ -193,7 +193,7 @@ fn test_input_file() {
 #[test]
 fn test_invalid_input() {
     // Incomplete expression
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("5+\n");
     cmd.assert()
         .stderr(predicate::str::contains(
@@ -202,7 +202,7 @@ fn test_invalid_input() {
         .success();
 
     // Invalid expression format - operator at start
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("+5\n");
     cmd.assert()
         .stderr(predicate::str::contains(
@@ -211,7 +211,7 @@ fn test_invalid_input() {
         .success();
 
     // Invalid expression format - consecutive operators
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("5++3\n");
     cmd.assert()
         .stderr(predicate::str::contains(
@@ -222,7 +222,7 @@ fn test_invalid_input() {
 
 #[test]
 fn test_division_by_zero() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10/0\n");
     cmd.assert()
         .stderr(predicate::str::contains(
@@ -233,7 +233,7 @@ fn test_division_by_zero() {
 
 #[test]
 fn test_overflow() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     // u128 maximum is 340282366920938463463374607431768211455, so 340282366920938463463374607431768211455+1 should overflow
     cmd.write_stdin("340282366920938463463374607431768211455+1\n");
     cmd.assert()
@@ -245,7 +245,7 @@ fn test_overflow() {
 
 #[test]
 fn test_subtraction_underflow() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("5-10\n");
     cmd.assert()
         .stderr(predicate::str::contains(
@@ -256,7 +256,7 @@ fn test_subtraction_underflow() {
 
 #[test]
 fn test_combined_options() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase")
         .arg("8")
         .arg("--obases")
@@ -274,7 +274,7 @@ fn test_combined_options() {
 #[test]
 fn test_invalid_base_options() {
     // Invalid input base
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("1").write_stdin("10\n");
     cmd.assert()
         .code(7) // Usage error
@@ -282,7 +282,7 @@ fn test_invalid_base_options() {
         .failure();
 
     // Invalid output base
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--obases").arg("37").write_stdin("10\n");
     cmd.assert()
         .code(7) // Usage error
@@ -290,7 +290,7 @@ fn test_invalid_base_options() {
         .failure();
 
     // Invalid base format
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("abc").write_stdin("10\n");
     cmd.assert()
         .code(7) // Usage error
@@ -300,7 +300,7 @@ fn test_invalid_base_options() {
 
 #[test]
 fn test_file_not_found() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inputfile").arg("nonexistent_file.txt");
     cmd.assert()
         .code(16) // File error
@@ -312,7 +312,7 @@ fn test_file_not_found() {
 
 #[test]
 fn test_backspace() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     // Input "123" then backspace once to get "12"
     cmd.write_stdin("123\x7f4\n");
     // We can't easily test the intermediate state, but the final result should be 124
@@ -324,7 +324,7 @@ fn test_backspace() {
 
 #[test]
 fn test_escape() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     // Input "123", escape, then "45"
     cmd.write_stdin("123\x1b45\n");
     // The escape should clear the input, so we should only see "45"
@@ -339,7 +339,7 @@ fn test_empty_input_file() {
     // Create an empty temporary file
     let temp_file = NamedTempFile::new().unwrap();
 
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inputfile")
         .arg(temp_file.path().to_str().unwrap());
     // Empty file should not produce any errors, just process nothing
@@ -348,7 +348,7 @@ fn test_empty_input_file() {
 
 #[test]
 fn test_uppercase_hex_input() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("16").write_stdin("ABC\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input (base 16): ABC"))
@@ -358,7 +358,7 @@ fn test_uppercase_hex_input() {
 
 #[test]
 fn test_lowercase_hex_input() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("16").write_stdin("abc\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input (base 16): abc"))
@@ -368,7 +368,7 @@ fn test_lowercase_hex_input() {
 
 #[test]
 fn test_octal_input() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("8").write_stdin("177\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input base set to: 8"))
@@ -379,7 +379,7 @@ fn test_octal_input() {
 
 #[test]
 fn test_max_base() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.arg("--inbase").arg("36").write_stdin("zzz\n");
     cmd.assert()
         .stdout(predicate::str::contains("Input base set to: 36"))
@@ -389,7 +389,7 @@ fn test_max_base() {
 
 #[test]
 fn test_multiple_expressions() {
-    let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+    let mut cmd = cargo_bin_cmd!("uqbasejump");
     cmd.write_stdin("10+5\n20-3\n4*6\n");
     cmd.assert()
         .stdout(predicate::str::contains("Expression (base 10): 10+5"))
@@ -409,7 +409,7 @@ fn test_consecutive_operators() {
     ];
 
     for &test_case in &test_cases {
-        let mut cmd = cargo_bin_cmd!("a1_2025_s2");
+        let mut cmd = cargo_bin_cmd!("uqbasejump");
         cmd.write_stdin(format!("{}\n", test_case));
         cmd.assert()
             .stderr(predicate::str::contains(format!(
