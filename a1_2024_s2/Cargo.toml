@@ -14,5 +14,9 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2.0.17"
 anyhow = "1.0.100"
 
+[dev-dependencies]
+assert_cmd = "2.0.14"
+predicates = "3.0.3"
+
 [lints.clippy]
 too_many_lines = "warn"

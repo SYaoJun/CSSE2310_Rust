@@ -1,13 +1,8 @@
 # CSSE2310/7231 (Rust)
-passed all testcase
 ## Specification
 It is a private assignment for UQ students.
-If you want to use this code, please contact the author. 
 
-## TODO
-1. comments
-2. separate the code into multiple files
-3. add more testcase
+If you want to use this code, please contact the author. 
 
 ## Contact
 - wx: hysteria00544
@@ -18,5 +13,3 @@ If you want to use this code, please contact the author.
 cd a1_2024_s2
 ./testa1_rust.sh
 ```
-## TODO
-- a1_2025_s2: 8.5 和 12.x 之后的 case
