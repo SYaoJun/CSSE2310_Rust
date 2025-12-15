@@ -20,6 +20,11 @@ impl Config {
         }
     }
 }
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 // 添加自定义log2函数，与原始代码保持一致
 fn log2(x: f64) -> f64 {

@@ -6,7 +6,6 @@ use std::process::exit;
 
 use a1_2024_s2::utils::log::init_logging;
 use anyhow::Result;
-use log;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -33,6 +32,11 @@ impl Config {
             double_check: false,
             num_digits: 0,
         }
+    }
+}
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -144,7 +148,7 @@ fn read_single_file(
         total_lines += 1;
         match line_result {
             Ok(line) => {
-                if process_line(&line.trim(), passwords, fname) {
+                if process_line(line.trim(), passwords, fname) {
                     has_valid_password = true;
                 } else {
                     invalid_lines += 1;
@@ -268,7 +272,7 @@ fn calculate_entropy_two(password: &str, passwords: &[String], config: &Config) 
 }
 
 fn check_case_match(password: &str, passwords: &[String], password_scale: &mut i32) -> Option<f64> {
-    for (_i, pwd) in passwords.iter().enumerate() {
+    for pwd in passwords.iter() {
         let letter_count = get_letter_count(pwd);
         *password_scale += 2_i32.pow(letter_count as u32) - 1;
         if pwd.to_uppercase() == password.to_uppercase() {
@@ -318,7 +322,7 @@ fn dfs(
     if dfs(password, leet_map, pwd_chars, index + 1) {
         return true;
     }
-    return false;
+    false
 }
 
 fn check_leet_match(
@@ -411,10 +415,10 @@ fn check_digit_append_match(
 ) -> Option<f64> {
     let power_table = [10, 100, 1000, 10000, 100000, 1000000, 10000000];
 
-    for (_i, pwd) in passwords.iter().enumerate() {
+    for pwd in passwords.iter() {
         let last_char = pwd.chars().last()?;
         if !last_char.is_ascii_digit() {
-            for j in 0..config.num_digits {
+            for (j, _) in power_table.iter().enumerate().take(config.num_digits) {
                 for value in 0..power_table[j] {
                     let digit_append = format!("{:0width$}", value, width = j + 1);
                     let new_pwd = format!("{}{}", pwd, digit_append);
@@ -438,13 +442,13 @@ fn check_double_match(
     passwords: &[String],
     password_scale: &mut i32,
 ) -> Option<f64> {
-    for (_i, first) in passwords.iter().enumerate() {
+    for first in passwords.iter() {
         let len1 = first.len();
         if len1 > password.len() || !password.starts_with(first) {
             *password_scale += passwords.len() as i32;
             continue;
         }
-        for (_j, second) in passwords.iter().enumerate() {
+        for second in passwords.iter() {
             *password_scale += 1;
 
             let len2 = second.len();
