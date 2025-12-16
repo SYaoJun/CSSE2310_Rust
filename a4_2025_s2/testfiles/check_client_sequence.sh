@@ -26,6 +26,13 @@
 #
 clientProg=${ratsclient:=./ratsclient}
 
+PATH=/usr/bin:/bin:${PATH}
+
+if [ ! -x "./ratsclient" ] && [ -x "../target/debug/ratsclient" ] ; then
+    ratsclient="../target/debug/ratsclient"
+    clientProg=${ratsclient}
+fi
+
 if test -t 2 ; then
     # stderr is a tty
     normal="$(tput sgr0)"
@@ -54,9 +61,8 @@ else
     white=""
 fi
 
-# Make a copy of stderr and close it (to prevent job control messages)
-exec {errfd}>&2
-exec 2>&-
+# macOS ships bash 3.2 by default which does not support bash4+ dynamic fd.
+errfd=2
 
 client="  ${green}${bold}"
 server="  ${red}${bold}"
@@ -92,11 +98,81 @@ function cleanup() {
 }
 
 function is_alive() {
-    [ -d /proc/$1 ]
+    ps -p $1 >/dev/null 2>&1
 }
 
 function debug() {
     echo "${!1}${2}${normal}" >&${debugfd}
+}
+
+run_with_timeout() {
+    local seconds="$1"
+    shift
+
+    if command -v timeout &> /dev/null; then
+        timeout "$seconds" "$@"
+        return $?
+    fi
+
+    if command -v gtimeout &> /dev/null; then
+        gtimeout "$seconds" "$@"
+        return $?
+    fi
+
+    perl -e '
+        my $t = shift @ARGV;
+        my $pid = fork();
+        if (!defined $pid) { exit 125; }
+        if ($pid == 0) {
+            exec @ARGV;
+            exit 127;
+        }
+        $SIG{ALRM} = sub { kill 9, $pid; exit 124; };
+        alarm($t);
+        waitpid($pid, 0);
+        my $status = $?;
+        alarm(0);
+        exit($status >> 8);
+    ' "$seconds" "$@"
+    return $?
+}
+
+read_line_timeout_fd() {
+    local timeout="$1"
+    local fd="$2"
+    if command -v python3 >/dev/null 2>&1 ; then
+        python3 - "$timeout" "$fd" <<'PY'
+import sys, os, selectors
+timeout = float(sys.argv[1])
+fd = int(sys.argv[2])
+sel = selectors.DefaultSelector()
+f = os.fdopen(os.dup(fd), 'r', encoding='utf-8', errors='replace', newline='')
+try:
+    sel.register(f, selectors.EVENT_READ)
+    events = sel.select(timeout)
+    if not events:
+        sys.exit(1)
+    line = f.readline()
+    if line == '':
+        sys.exit(1)
+    sys.stdout.write(line)
+    sys.exit(0)
+finally:
+    try:
+        sel.unregister(f)
+    except Exception:
+        pass
+    try:
+        f.close()
+    except Exception:
+        pass
+PY
+        return $?
+    fi
+    # integer fallback
+    local t_int=${timeout%.*}
+    run_with_timeout "${t_int:-1}" cat <&${fd} | head -n 1
+    return $?
 }
 
 function get_remaining_data_from() {
@@ -132,7 +208,7 @@ function get_remaining_data_from() {
         debug ${who} "Got exit status $status"
         # Get the output
         debug ${who} "Saving everything from ${who}'s stdout"
-        timeout 1 cat <&${outfd} >> /tmp/csse2310.${who}.stdout.$$
+        run_with_timeout 1 cat <&${outfd} >> /tmp/csse2310.${who}.stdout.$$
         # Close the output
         eval "exec ${outfd}>&-"
         return $status
@@ -150,14 +226,15 @@ function unknown_request() {
     exit 23
 }
 
-exec {debugfd}>/dev/null
+exec 4>/dev/null
+debugfd=4
 maxArgs=""
 connlimit=0
 delay=0.01
 
 while true ; do
     case "$1" in 
-	--debug ) eval "exec ${debugfd}>&${errfd}" ; shift 1 ;;
+	--debug ) exec 4>&2 ; shift 1 ;;
 	* ) break;
     esac
 done
@@ -179,7 +256,7 @@ port=$(testfiles/freeport.sh)
 debug advice "Identified free port number for server to use: $port"
 
 # Remove our output files and pipes if they exist
-/usr/bin/rm -f /tmp/csse2310.{client,server}.{stdout,stderr,in,out}.$$ 
+rm -f /tmp/csse2310.{client,server}.{stdout,stderr,in,out}.$$ 
 
 # Create the named pipe files for communicating with the server and client
 serverin=/tmp/csse2310.server.in.$$
@@ -225,8 +302,10 @@ client_processid=${client_pid}
 client_started=1
 
 # Open the pipes
-exec {clientinfd}> ${clientin}
-exec {clientoutfd}< ${clientout}
+clientinfd=43
+clientoutfd=44
+exec 43> ${clientin}
+exec 44< ${clientout}
 debug client "Input pipe is now fd ${clientinfd}, output pipe is now fd ${clientoutfd}"
 
 declare -i linenum=0;
@@ -325,7 +404,7 @@ while read -r who request mesg <&3 ; do
 	    fi
 	    debug ${who} "Attempting to read line from ${who}'s stdout"
 	    IFS=""
-	    if read -t ${timeout} -r line <&${out} ; then
+	    if line=$(read_line_timeout_fd "${timeout}" "${out}") ; then
 		# Save the line to the output file
 		debug ${who} "${who} output line '${line}'"
 		echo "${line}" >> /tmp/csse2310.${who}.stdout.$$
@@ -346,7 +425,7 @@ while read -r who request mesg <&3 ; do
 	    fi
 	    IFS=""
 	    # We open pipe for reading and writing here so there is no block
-	    if read -t "${timeout}" -r line <&${out} ; then
+	    if line=$(read_line_timeout_fd "${timeout}" "${out}") ; then
 		# we expected no data but got some
 		debug ${who} "Expected ${who} to output nothing in the next ${timeout}s but got line '${line}'"
 		# Save the line to the output file

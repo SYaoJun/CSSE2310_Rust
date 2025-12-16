@@ -8,6 +8,42 @@
  
 rm -f /tmp/stderr
 
+run_with_timeout() {
+    local seconds="$1"
+    shift
+
+    if command -v timeout &> /dev/null; then
+        timeout "$seconds" "$@"
+        return $?
+    fi
+
+    if command -v gtimeout &> /dev/null; then
+        gtimeout "$seconds" "$@"
+        return $?
+    fi
+
+    perl -e '
+        my $t = shift @ARGV;
+        my $pid = fork();
+        if (!defined $pid) { exit 125; }
+        if ($pid == 0) {
+            exec @ARGV;
+            exit 127;
+        }
+        $SIG{ALRM} = sub { kill 9, $pid; exit 124; };
+        alarm($t);
+        waitpid($pid, 0);
+        my $status = $?;
+        alarm(0);
+        exit($status >> 8);
+    ' "$seconds" "$@"
+    return $?
+}
+
+if [ ! -x "./ratsserver" ] && [ -x "../target/debug/ratsserver" ] ; then
+    ratsserver="../target/debug/ratsserver"
+fi
+
 if [ "$1" = "NONE" ] ; then
     portarg=""
     port=0
@@ -75,8 +111,13 @@ if [ "$status" = 0 ] ; then
     # We start netcat in verbose mode so it reports a connection message if
     # it connects.
     rm -f /tmp/stderr2
-    timeout 1.2 nc -4 -v localhost $reported_port >/dev/null 2>/tmp/stderr2
-    if grep "Connected to 127.0.0.1" /tmp/stderr2 >&/dev/null ; then
+    run_with_timeout 2 nc -4 -v localhost $reported_port >/dev/null 2>/tmp/stderr2
+
+    # GNU netcat (Linux) typically prints: "Connected to 127.0.0.1"
+    # BSD netcat (macOS) typically prints: "Connection to ... succeeded!"
+    if grep "Connected to 127.0.0.1" /tmp/stderr2 >&/dev/null || \
+       grep "succeeded" /tmp/stderr2 >&/dev/null || \
+       grep "open" /tmp/stderr2 >&/dev/null ; then
 	echo "Test client connected to server"
     else
 	echo "Test client failed to connect to server"

@@ -26,7 +26,24 @@ while [ $count_iterations -lt 30 ] ; do
 	# Process does not exist - abort
 	exit 1
     fi
-    listening_ports=$(ls -l /proc/$pid/fd 2>/dev/null | grep socket | cut -d "[" -f 2 | tr -d ] | xargs -I X grep X /proc/self/net/tcp | grep "00000000:0000 0A" | cut -c 16-19 | xargs -I X printf %d\\n 0xX)
+    listening_ports=""
+
+    if [ -d "/proc/$pid" ] ; then
+        listening_ports=$(ls -l /proc/$pid/fd 2>/dev/null | grep socket | cut -d "[" -f 2 | tr -d ] | xargs -I X grep X /proc/self/net/tcp | grep "00000000:0000 0A" | cut -c 16-19 | xargs -I X printf %d\\n 0xX)
+    else
+        if command -v lsof >/dev/null 2>&1 ; then
+            if [ "$port" -a "$port" != "0" ] ; then
+                if lsof -nP -iTCP:${port} -sTCP:LISTEN 2>/dev/null | grep "\b${pid}\b" >/dev/null ; then
+                    listening_ports="$port"
+                fi
+            else
+                p=$(lsof -nP -a -p ${pid} -iTCP -sTCP:LISTEN 2>/dev/null | awk '{print $9}' | awk -F: '{print $NF}' | head -n 1)
+                if [ "$p" ] ; then
+                    listening_ports="$p"
+                fi
+            fi
+        fi
+    fi
     if [ "$listening_ports" ] ; then
 	if [ "$port" -a "$port" != "0" ] ; then
 	    # Looking for specific port

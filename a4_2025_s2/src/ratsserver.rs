@@ -1,12 +1,12 @@
-use std::io::{Write, Read};
+use std::io::Read;
 use std::net::TcpListener;
+use std::process;
 use std::sync::{Arc, Condvar, Mutex, atomic::{AtomicUsize, Ordering}};
 use std::thread;
 
 use std::io;
-// 导入第三方库
-use signal_hook::iterator;
 use signal_hook::consts;
+use signal_hook::iterator;
 
 // 简单的信号量实现
 struct ConnectionSemaphore {
@@ -94,19 +94,14 @@ impl ClientInfo {
 fn handle_new_connection( client_info: ClientInfo, context_info: Arc<Mutex<ContextInfo>>) -> std::io::Result<()> {
     let mut stream = client_info.tcp_stream.try_clone().unwrap();
     let mut buffer = [0; 1024];
-    // 打印当前线程 id
-    println!("当前线程ID: {:?}", thread::current().id());
     loop{
         match stream.read(&mut buffer) {
             Ok(0) => {
                 // 读到0字节，表示连接已断开
-                println!("客户端断开连接");
                 break;
             }
             Ok(n) => {
-                // 正常读取到数据
-                println!("收到 {} 字节数据", n);
-                // 处理数据...
+                let _ = n;
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 // 非阻塞模式下的无数据可读
@@ -114,12 +109,11 @@ fn handle_new_connection( client_info: ClientInfo, context_info: Arc<Mutex<Conte
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
                 // 读取超时
-                println!("读取超时");
                 continue;
             }
             Err(e) => {
                 // 其他错误，通常表示连接断开
-                println!("读取错误: {}, 连接可能已断开", e);
+                let _ = e;
                 break;
             }
         } 
@@ -150,8 +144,7 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
         max_connections: maxconns as i32,
     }));
     
-    println!("进程ID: {}", std::process::id());
-    println!("发送SIGHUP信号: kill -HUP {}", std::process::id());
+    let _ = std::process::id();
     
     // 在单独的线程中处理信号
     let context_info_clone_sig = context_info.clone();
@@ -164,20 +157,28 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
         for signal in signal_receiver.forever() {
             if signal == consts::SIGHUP {
                 let context_info_guard = context_info_clone_sig.lock().unwrap();
-                println!("Players connected: {}", context_info_guard.current_connected);
-                println!("Total connected players: {}", context_info_guard.total_connected);
-                println!("Running games: {}", context_info_guard.running_games);
-                println!("Games completed: {}", context_info_guard.games_completed);
-                println!("Games terminated: {}", context_info_guard.games_terminated);
-                println!("Total tricks: {}", context_info_guard.total_tricks);
+                eprintln!("Players connected: {}", context_info_guard.current_connected);
+                eprintln!("Total connected players: {}", context_info_guard.total_connected);
+                eprintln!("Running games: {}", context_info_guard.running_games);
+                eprintln!("Games completed: {}", context_info_guard.games_completed);
+                eprintln!("Games terminated: {}", context_info_guard.games_terminated);
+                eprintln!("Total tricks: {}", context_info_guard.total_tricks);
             }
         }
     });
     
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port))?;
+    let local_port = listener.local_addr().map(|a| a.port()).unwrap_or(0);
+    eprintln!("{}", local_port);
    
     loop{
-        let stream = listener.accept()?.0;
+        let stream = match listener.accept() {
+            Ok((stream, _addr)) => stream,
+            Err(e) => {
+                let _ = e;
+                break;
+            }
+        };
         let client_info = ClientInfo::new(stream);
         let context_info_clone = context_info.clone();
         {
@@ -195,18 +196,47 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
             }
         });
     }
+
+    Ok(())
 }
 
-fn main()->io::Result<()>  {
-    // 接受命令行参数
+fn print_usage_and_exit() -> ! {
+    eprintln!("Usage: ./ratsserver maxconns message [port]");
+    process::exit(8);
+}
+
+fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let maxconns = args.get(1).map(|s| s.parse().unwrap_or(10)).unwrap_or(10);
-    
-    // 处理端口参数，避免临时值被过早释放
-    let default_port = "8080".to_string();
-    let port = args.get(2).unwrap_or(&default_port);
-    
-    start_server(port, maxconns)
+
+    if args.len() != 3 && args.len() != 4 {
+        print_usage_and_exit();
+    }
+
+    if args[1].is_empty() || args[2].is_empty() || (args.len() == 4 && args[3].is_empty()) {
+        print_usage_and_exit();
+    }
+
+    let maxconns: usize = match args[1].parse() {
+        Ok(v) => v,
+        Err(_) => print_usage_and_exit(),
+    };
+
+    let _parsed_args = Arguments {
+        maxconns,
+        message: args[2].clone(),
+        port: args.get(3).cloned(),
+    };
+
+    let port_str = args.get(3).map(|s| s.as_str()).unwrap_or("0");
+    match start_server(port_str, maxconns) {
+        Ok(()) => process::exit(0),
+        Err(e) => {
+            if e.kind() == io::ErrorKind::AddrInUse {
+                process::exit(17);
+            }
+            process::exit(17);
+        }
+    }
 }
 
 #[cfg(test)]

@@ -1,8 +1,0 @@
-# client-server-game
-## TODO
-1. 结合信号统计当前已经建立连接的客户端数量
-2. 已经结束的客户端数量
-3. 异常断开的客户端数量
-## 测试
-1. 单元测试 cargo test
-2. 集成测试 ./tests/run_all_tests.sh

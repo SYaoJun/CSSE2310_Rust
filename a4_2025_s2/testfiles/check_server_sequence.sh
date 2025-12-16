@@ -77,6 +77,10 @@
 #	
 PATH=${PATH}:/usr/bin:/local/courses/csse2310/bin
 
+if [ ! -x "./ratsserver" ] && [ -x "../target/debug/ratsserver" ] ; then
+    ratsserver="../target/debug/ratsserver"
+fi
+
 if test -t  2 ; then
     # stderr is a tty
     normal="$(tput sgr0)"
@@ -126,24 +130,55 @@ function set_socket_base_count() {
 
 # Usage: count_sockets pid
 function count_sockets() {
-    numSockets=$(ls -l /proc/$1/fd 2>/dev/null | grep socket | sed -e 's/^.*socket://' \
-        | sort | uniq | wc -l)
-    echo $((numSockets - baseSocketCount))
+    if [ -d /proc/$1 ] ; then
+        numSockets=$(ls -l /proc/$1/fd 2>/dev/null | grep socket | sed -e 's/^.*socket://' \
+            | sort | uniq | wc -l)
+        echo $((numSockets - baseSocketCount))
+        return
+    fi
+
+    if command -v lsof >/dev/null 2>&1 ; then
+        # subtract header line
+        numSockets=$(lsof -nP -a -p $1 2>/dev/null | grep "\bsocket\b" | wc -l)
+        echo $((numSockets - baseSocketCount))
+        return
+    fi
+
+    echo 0
 }
 
 # Usage: count_active_threads pid basecount
 function count_active_threads() {
-    numthreads=$(ls /proc/$1/task 2>/dev/null | wc -l)
     basecount=$2
-    echo $((numthreads - basecount))
+    if [ -d /proc/$1 ] ; then
+        numthreads=$(ls /proc/$1/task 2>/dev/null | wc -l)
+        echo $((numthreads - basecount))
+        return
+    fi
+
+    # macOS: use ps to count threads (includes header line)
+    if ps -M -p $1 >/dev/null 2>&1 ; then
+        numthreads=$(ps -M -p $1 2>/dev/null | wc -l)
+        numthreads=$((numthreads - 1))
+        echo $((numthreads - basecount))
+        return
+    fi
+
+    echo 0
 }
 
 # Requires use of thread_interposer
 # Usage: count_total_threads basecount
 function count_total_threads() {
-    numthreads=$(cat /tmp/csse2310.threadcount)
     basecount=$1
-    echo $((numthreads - basecount))
+    if [ -f /tmp/csse2310.threadcount ] ; then
+        numthreads=$(cat /tmp/csse2310.threadcount 2>/dev/null)
+        numthreads=${numthreads:-0}
+        echo $((numthreads - basecount))
+        return
+    fi
+
+    echo 0
 }
 
 nc_pids=()
@@ -159,11 +194,93 @@ function cleanup() {
 }
 
 function is_client_alive() {
-    [ -d /proc/${nc_pids[$1]} ]
+    ps -p ${nc_pids[$1]} >/dev/null 2>&1
 }
+
+# macOS ships bash 3.2 by default which does not support bash4+ dynamic fd
+# syntax like: exec {debugfd}>/dev/null. We use a fixed fd (4).
+# NOTE: fd 3 is later used for reading the sequence file.
+exec 4>/dev/null
+debugfd=4
 
 function debug() {
     echo "${!1}${2}${normal}" >&${debugfd}
+}
+
+run_with_timeout() {
+    local seconds="$1"
+    shift
+
+    if command -v timeout &> /dev/null; then
+        timeout "$seconds" "$@"
+        return $?
+    fi
+
+    if command -v gtimeout &> /dev/null; then
+        gtimeout "$seconds" "$@"
+        return $?
+    fi
+
+    perl -e '
+        my $t = shift @ARGV;
+        my $pid = fork();
+        if (!defined $pid) { exit 125; }
+        if ($pid == 0) {
+            exec @ARGV;
+            exit 127;
+        }
+        $SIG{ALRM} = sub { kill 9, $pid; exit 124; };
+        alarm($t);
+        waitpid($pid, 0);
+        my $status = $?;
+        alarm(0);
+        exit($status >> 8);
+    ' "$seconds" "$@"
+    return $?
+}
+
+read_line_timeout() {
+    local pipe_path="$1"
+    local timeout="$2"
+
+    if command -v python3 >/dev/null 2>&1 ; then
+        python3 - "$pipe_path" "$timeout" <<'PY'
+import sys, os, selectors
+
+path = sys.argv[1]
+timeout = float(sys.argv[2])
+
+sel = selectors.DefaultSelector()
+
+fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+f = os.fdopen(fd, 'r', encoding='utf-8', errors='replace', newline='')
+try:
+    sel.register(f, selectors.EVENT_READ)
+    events = sel.select(timeout)
+    if not events:
+        sys.exit(1)
+    line = f.readline()
+    if line == '':
+        sys.exit(1)
+    sys.stdout.write(line)
+    sys.exit(0)
+finally:
+    try:
+        sel.unregister(f)
+    except Exception:
+        pass
+    try:
+        f.close()
+    except Exception:
+        pass
+PY
+        return $?
+    fi
+
+    # Fallback: integer timeout only
+    local t_int=${timeout%.*}
+    run_with_timeout "${t_int:-1}" cat "$pipe_path" | head -n 1
+    return $?
 }
 
 function terminate_processes() {
@@ -172,7 +289,7 @@ function terminate_processes() {
     for i in ${!nc_pids[@]} ; do
         if [ -r /tmp/csse2310.client.$$.$i.pipe.out ] ; then
             debug client$i "Reading remaining data on client $i stdout"
-            timeit -stdin /tmp/csse2310.client.$$.$i.pipe.out -t 2 -k 1 -o /dev/null cat >> /tmp/csse2310.client.$$.$i.stdout &
+            run_with_timeout 2 cat /tmp/csse2310.client.$$.$i.pipe.out >> /tmp/csse2310.client.$$.$i.stdout &
             catpids[$i]=$!
         fi
     done
@@ -218,7 +335,6 @@ function terminate_processes() {
     rm -f /tmp/csse2310.client.$$.*.pipe.*
 }
 
-exec {debugfd}>/dev/null
 connlimit=0
 delay=0.03
 allowexit=""
@@ -228,7 +344,7 @@ unset A4_STATS_PORT statsport
 while true ; do
     case "$1" in 
         --valgrind ) valgrind=1 ; shift 1 ;;
-	--debug ) eval "exec ${debugfd}>&2" ; shift 1 ;;
+	--debug ) exec 4>&2 ; shift 1 ;;
         --allowexit ) allowexit=1 ; shift 1 ;;
         --logmem ) logmem="testfiles/memory_interposer.so:"; shift ;;
 	--stats )
@@ -272,13 +388,23 @@ rm -f /tmp/csse2310.listen.*
 rm -f /tmp/csse2310.memusage
 debug advice "Starting server in the background as follows:"
 
+is_darwin=0
+if [ "$(uname -s 2>/dev/null)" = "Darwin" ] ; then
+    is_darwin=1
+fi
+
 if [ "${valgrind}" ] ; then
     debug advice "/usr/bin/valgrind ./ratsserver "${maxConnsArg}" "${greeting}" $port &"
     /usr/bin/valgrind ${ratsserver:=./ratsserver} "${maxConnsArg}" "${greeting}" $port >/tmp/csse2310.server.out.$$ &
     server_pid=$!
 else 
-    debug advice "LD_PRELOAD=${logmem}testfiles/thread_interposer.so:${CSSE2310_PRELOAD} ./ratsserver "${maxConnsArg}" "${greeting}" $port &"
-    LD_PRELOAD=${logmem}testfiles/thread_interposer.so:${CSSE2310_PRELOAD} ${ratsserver:=./ratsserver} "${maxConnsArg}" "${greeting}" $port >/tmp/csse2310.server.out.$$ 2>/tmp/csse2310.server.err.$$ &
+    if [ $is_darwin -eq 1 ] ; then
+        debug advice "./ratsserver "${maxConnsArg}" "${greeting}" $port &"
+        ${ratsserver:=./ratsserver} "${maxConnsArg}" "${greeting}" $port >/tmp/csse2310.server.out.$$ 2>/tmp/csse2310.server.err.$$ &
+    else
+        debug advice "LD_PRELOAD=${logmem}testfiles/thread_interposer.so:${CSSE2310_PRELOAD} ./ratsserver "${maxConnsArg}" "${greeting}" $port &"
+        LD_PRELOAD=${logmem}testfiles/thread_interposer.so:${CSSE2310_PRELOAD} ${ratsserver:=./ratsserver} "${maxConnsArg}" "${greeting}" $port >/tmp/csse2310.server.out.$$ 2>/tmp/csse2310.server.err.$$ &
+    fi
     server_pid=$!
 fi
 
@@ -329,7 +455,7 @@ while read -r client request mesg <&3 ; do
     fi
 
     # Make sure server is still alive
-    if [ ! "$allowexit" -a ! -d /proc/$server_pid ] ; then
+    if [ ! "$allowexit" -a ! ps -p $server_pid >/dev/null 2>&1 ] ; then
 	echo "Server has died unexpectedly - aborting" >&2
 	terminate_processes
 	exit 10
@@ -411,7 +537,11 @@ while read -r client request mesg <&3 ; do
 	# Start up netcat as our dummy client - anything received over the 
 	# input pipe will be sent to the server. 
         debug client${client} "Starting nc (2310netclient) as client ${client}"
-	2310netclient ${port_to_use} < ${pipein} > ${pipeout} 2>/dev/null &
+	if command -v 2310netclient >/dev/null 2>&1 ; then
+	    2310netclient ${port_to_use} < ${pipein} > ${pipeout} 2>/dev/null &
+	else
+	    nc -4 localhost ${port_to_use} < ${pipein} > ${pipeout} 2>/dev/null &
+	fi
 	nc_pids[${client}]="$!"
 	# Create an empty client output file
 	rm -f /tmp/csse2310.client.$$.${client}.stdout
@@ -424,7 +554,7 @@ while read -r client request mesg <&3 ; do
 	close )
 	    # Copy everything remaining from output pipe to stdout file for client
 	    debug client${client} "Saving everything from client's stdout and quitting client"
-	    timeit -t 2 -k 1 -o /dev/null cat ${pipeout} >> /tmp/csse2310.client.$$.${client}.stdout &
+	    run_with_timeout 2 cat ${pipeout} >> /tmp/csse2310.client.$$.${client}.stdout &
 	    catpid=$!
 	    # Need a delay here to (hopefully) start cat reading before we kill the
 	    # client (which kills the other end of the pipe)
@@ -491,7 +621,7 @@ while read -r client request mesg <&3 ; do
 	    fi
 	    debug client${client} "Attempting to read line from client ${client}'s stdout"
 	    IFS=""
-	    if read -t ${timeout} -r clientline < ${pipeout} ; then
+	    if clientline=$(read_line_timeout "${pipeout}" "${timeout}") ; then
 		# Save the line to the client's output file
 		debug client${client} "Client ${client} output line '${clientline}'"
 		echo "${clientline}" >> /tmp/csse2310.client.$$.${client}.stdout
@@ -512,7 +642,7 @@ while read -r client request mesg <&3 ; do
 		timeout=0.1
 	    fi
 	    IFS=""
-	    if read -t "${timeout}" -r clientline <> ${pipeout} ; then
+	    if clientline=$(read_line_timeout "${pipeout}" "${timeout}") ; then
 		# we expected no data but got some
 		debug client${client} "Expected client ${client} to output nothing in the next ${timeout}s but got line '${clientline}'"
 		# Save the line to the client's output file
