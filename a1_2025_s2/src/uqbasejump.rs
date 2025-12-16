@@ -313,12 +313,10 @@ fn process_stdin(args: &Arguments) -> Result<()> {
                     .and_then(|e| evaluate_expression(&e))
                 {
                     Ok(result) => {
-                        let expr_in_base =
-                            convert_expression(&combined, input_base, input_base)
-                                .unwrap_or_else(|_| combined.clone());
+                        let expr_in_base = convert_expression(&combined, input_base, input_base)
+                            .unwrap_or_else(|_| combined.clone());
                         println!("Expression (base {}): {}", input_base, expr_in_base);
-                        let result_converted =
-                            convert_int_to_str_any_base(result, input_base);
+                        let result_converted = convert_int_to_str_any_base(result, input_base);
                         println!("Result (base {}): {}", input_base, result_converted);
                         print_in_bases_dynamic(result, &output_bases);
                         history.push((expr_in_base, result_converted, input_base));

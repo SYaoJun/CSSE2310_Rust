@@ -58,7 +58,11 @@ fn print_state(config: &Config) {
         println!("Variables:");
         for name in &config.init_order {
             if let Some(value) = config.init_map.get(name) {
-                println!("{} = {}", name, format_value(*value, config.significant_figures));
+                println!(
+                    "{} = {}",
+                    name,
+                    format_value(*value, config.significant_figures)
+                );
             }
         }
     }
@@ -91,7 +95,10 @@ fn sync_loop_current_from_map(config: &mut Config, name: &str, value: f64) {
 }
 
 fn find_loop_var_mut<'a>(config: &'a mut Config, name: &str) -> Option<&'a mut ForLoop> {
-    config.for_loop_struct_vec.iter_mut().find(|lv| lv.name == name)
+    config
+        .for_loop_struct_vec
+        .iter_mut()
+        .find(|lv| lv.name == name)
 }
 
 fn find_loop_index(config: &Config, name: &str) -> Option<usize> {
@@ -239,9 +246,7 @@ fn handle_loop_command(config: &mut Config, var_name: &str, expr: &str) -> bool 
 
         let trimmed_expr = expr.trim();
         let is_assignment = trimmed_expr.contains('=');
-        let eval_res = {
-            evaluate_expression(trimmed_expr, &mut config.init_map)
-        };
+        let eval_res = { evaluate_expression(trimmed_expr, &mut config.init_map) };
         match eval_res {
             Ok(result) => {
                 if is_assignment {
@@ -366,12 +371,12 @@ fn main() {
 
     print_state(&config);
 
-            // Handle file input if provided
+    // Handle file input if provided
     if !config.filename_flag {
         // Print prompt for interactive input
         println!("Please enter your expressions and assignment operations to be evaluated.");
     }
-    
+
     // Handle file input if provided
     if let Some(lines) = file_lines {
         // Process file content
@@ -429,34 +434,43 @@ fn main() {
 
             let trimmed = raw.trim();
             if !trimmed.is_empty() {
-
                 // Check if it's an assignment
                 if trimmed.contains('=') {
                     match evaluate_expression(&trimmed, &mut config.init_map) {
                         Ok(result) => {
                             // For assignments, print "variable = value"
-                            let formatted_result = format_result(result, config.significant_figures);
+                            let formatted_result =
+                                format_result(result, config.significant_figures);
                             let parts: Vec<&str> = trimmed.split('=').collect();
                             let var_name = parts[0].trim();
                             println!("{} = {}", var_name, formatted_result);
 
-                            if config.for_loop_struct_vec.iter().any(|lv| lv.name == var_name) {
+                            if config
+                                .for_loop_struct_vec
+                                .iter()
+                                .any(|lv| lv.name == var_name)
+                            {
                                 sync_loop_current_from_map(&mut config, var_name, result);
                             }
-                        },
+                        }
                         Err(_) => {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                         }
                     }
                 } else {
                     match evaluate_expression(&trimmed, &mut config.init_map) {
                         Ok(result) => {
                             // For regular expressions, print "Result = value"
-                            let formatted_result = format_result(result, config.significant_figures);
+                            let formatted_result =
+                                format_result(result, config.significant_figures);
                             println!("Result = {}", formatted_result);
-                        },
+                        }
                         Err(_) => {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                         }
                     }
                 }
@@ -485,7 +499,9 @@ fn main() {
 
                     if raw.starts_with("@range ") {
                         if raw.as_bytes().get(7) == Some(&b' ') {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                             continue;
                         }
                         let spec = &raw[7..];
@@ -493,14 +509,18 @@ fn main() {
                         continue;
                     } else if raw.starts_with("@range") {
                         if raw.starts_with('@') {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                             continue;
                         }
                     }
 
                     if raw.starts_with("@loop ") {
                         if raw.as_bytes().get(6) == Some(&b' ') {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                             continue;
                         }
                         let rest = &raw[6..];
@@ -511,47 +531,58 @@ fn main() {
                         continue;
                     } else if raw.starts_with("@loop") {
                         if raw.starts_with('@') {
-                            eprintln!("Invalid command, expression or assignment operation detected");
+                            eprintln!(
+                                "Invalid command, expression or assignment operation detected"
+                            );
                             continue;
                         }
                     }
 
                     let trimmed = raw.trim();
                     if !trimmed.is_empty() {
-
                         // Check if it's an assignment
                         if trimmed.contains('=') {
                             match evaluate_expression(&trimmed, &mut config.init_map) {
                                 Ok(result) => {
                                     // For assignments, print "variable = value"
-                                    let formatted_result = format_result(result, config.significant_figures);
+                                    let formatted_result =
+                                        format_result(result, config.significant_figures);
                                     let parts: Vec<&str> = trimmed.split('=').collect();
                                     let var_name = parts[0].trim();
                                     println!("{} = {}", var_name, formatted_result);
 
                                     // If this assignment targets a loop variable, update its current value.
-                                    if config.for_loop_struct_vec.iter().any(|lv| lv.name == var_name) {
+                                    if config
+                                        .for_loop_struct_vec
+                                        .iter()
+                                        .any(|lv| lv.name == var_name)
+                                    {
                                         sync_loop_current_from_map(&mut config, var_name, result);
                                     }
-                                },
+                                }
                                 Err(_) => {
-                                    eprintln!("Invalid command, expression or assignment operation detected");
+                                    eprintln!(
+                                        "Invalid command, expression or assignment operation detected"
+                                    );
                                 }
                             }
                         } else {
                             match evaluate_expression(&trimmed, &mut config.init_map) {
                                 Ok(result) => {
                                     // For regular expressions, print "Result = value"
-                                    let formatted_result = format_result(result, config.significant_figures);
+                                    let formatted_result =
+                                        format_result(result, config.significant_figures);
                                     println!("Result = {}", formatted_result);
-                                },
+                                }
                                 Err(_) => {
-                                    eprintln!("Invalid command, expression or assignment operation detected");
+                                    eprintln!(
+                                        "Invalid command, expression or assignment operation detected"
+                                    );
                                 }
                             }
                         }
                     }
-                },
+                }
                 Err(err) => {
                     eprintln!("Error reading input: {}", err);
                     break;
@@ -559,7 +590,7 @@ fn main() {
             }
         }
     }
-    
+
     // Print closing message
     println!("Thank you for using uqexpr.");
 }
