@@ -1,0 +1,5 @@
+run sleep 100
+
+send <0> hello sleep!
+
+read <0>

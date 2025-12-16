@@ -1,0 +1,13 @@
+# Details for test 11.3.
+# $1 will be run_test, explain_test or mark_test.
+function test11.3() {
+    "$1" 11.3 "job_command03" \
+        "Check uqcshell correctly implements the job command with a non-existent job file" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/11.3.commands" \
+        --exit 15 \
+        --stdout testfiles/11.3.stdout \
+        --stderr testfiles/11.3.stderr \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}

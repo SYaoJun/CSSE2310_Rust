@@ -1,0 +1,14 @@
+# Details for test 19.2.
+# $1 will be run_test, explain_test or mark_test.
+function test19.2() {
+    "$1" 19.2 "server_stats_http_single_client02" \
+        "(CSSE7231) Check ratsserver handles HTTP stats request after one client connects and disconnects but no games are played" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --optional \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/19.2.stdout \
+        --stderr testfiles/empty \
+        "testfiles/check_server_sequence.sh" '--stats' '0' 'Hello' 'testfiles/19.2.sequence'
+}

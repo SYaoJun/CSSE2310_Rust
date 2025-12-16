@@ -1,0 +1,13 @@
+# Details for test 9.5.
+# $1 will be run_test, explain_test or mark_test.
+function test9.5() {
+    "$1" 9.5 "send_command05" \
+        "Check uqcshell correctly implements the send command with only one argument after send" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/9.5.commands" \
+        --exit 15 \
+        --stdout testfiles/9.5.stdout \
+        --stderr testfiles/9.5.stderr \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}

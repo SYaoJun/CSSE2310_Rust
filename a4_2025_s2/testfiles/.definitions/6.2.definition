@@ -1,0 +1,13 @@
+# Details for test 6.2.
+# $1 will be run_test, explain_test or mark_test.
+function test6.2() {
+    "$1" 6.2 "client_comms_failure02" \
+        "Check ratsclient handles truncated response being returned by server" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/6.2.stdout \
+        --stderr testfiles/6.2.stderr \
+        "testfiles/check_client_comms.sh" '--showclientoutput' '--serverresponse' 'testfiles/6.2.response' 'player' 'game'
+}

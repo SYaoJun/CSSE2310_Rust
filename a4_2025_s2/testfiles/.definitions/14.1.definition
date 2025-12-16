@@ -1,0 +1,15 @@
+# Details for test 14.1.
+# $1 will be run_test, explain_test or mark_test.
+function test14.1() {
+    "$1" 14.1 "server_comms_failure01" \
+        "Check ratsserver handles the current player disconnecting" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/14.1.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/14.1.csse2310.totalthreadcount.txt" \
+        "A4_DECK=TC6H7DTS4S5D2DADQDAH6SKDJDAC4HAS3C9SJC6CQS3S4C8SJH7HJS6D4DQC5H2HQH8C8HKH5S7S5C3DKC2C9C2SKSTD9HTH7C9D8D3H" \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/14.1.sequence'
+}

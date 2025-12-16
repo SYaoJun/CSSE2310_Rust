@@ -1,0 +1,13 @@
+# Details for test 16.1.
+# $1 will be run_test, explain_test or mark_test.
+function test16.1() {
+    "$1" 16.1 "server_statistics01" \
+        "Check ratsserver handles SIGHUP before any clients connect" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/empty \
+        --stderr testfiles/16.1.stderr \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/16.1.sequence'
+}

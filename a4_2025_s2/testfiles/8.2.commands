@@ -1,0 +1,5 @@
+run tail -f testfiles/motd
+
+read <0>
+
+read <0>

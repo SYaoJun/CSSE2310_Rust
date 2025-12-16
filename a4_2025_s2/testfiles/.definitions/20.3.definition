@@ -1,0 +1,15 @@
+# Details for test 20.3.
+# $1 will be run_test, explain_test or mark_test.
+function test20.3() {
+    "$1" 20.3 "server_stats_multiple03" \
+        "(CSSE7231) Check ratsserver handles HTTP stats request after four clients connect and start a game" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --optional \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/20.3.stdout \
+        --stderr testfiles/empty \
+        "A4_DECK=9H9D6C3HTSQD8HQH3S3CKCKH7SAS9C3D6D2S5DJSJHQC4SJD5CAC8CTC2DKDJC4H2CTDAH8S4DQS6SAD7D5H2HKS5S6H9S8DTH4C7H7C" \
+        "testfiles/check_server_sequence.sh" '--stats' '0' 'Hello' 'testfiles/20.3.sequence'
+}

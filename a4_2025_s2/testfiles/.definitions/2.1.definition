@@ -1,0 +1,13 @@
+# Details for test 2.1.
+# $1 will be run_test, explain_test or mark_test.
+function test2.1() {
+    "$1" 2.1 "client_connection01" \
+        "Check ratsclient handles inability to connect to server" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 8 \
+        --stdout testfiles/empty \
+        --stderr testfiles/2.1.stderr \
+        "./ratsclient" 'player' 'game' '200'
+}

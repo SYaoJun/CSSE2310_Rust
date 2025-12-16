@@ -1,0 +1,15 @@
+# Details for test 10.5.
+# $1 will be run_test, explain_test or mark_test.
+function test10.5() {
+    "$1" 10.5 "server_single_game05" \
+        "Check ratsserver handles the lead playing a valid card" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/10.5.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/10.5.csse2310.totalthreadcount.txt" \
+        "A4_DECK=3D9H2DKC5CQCJH4S3C3HTC5H5SQH7HKSAC3S6C8CASTD4C9STS8DJD2C6H2H4DTH6SKH7CADAHJC7SQSJS2S8SKD7D9C4H9D6DQD8H5D" \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/10.5.sequence'
+}

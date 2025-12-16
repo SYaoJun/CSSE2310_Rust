@@ -1,0 +1,3 @@
+run ls -d /nonexistent_directory . &> /tmp/csse2310_a3_test_16.3.out
+
+

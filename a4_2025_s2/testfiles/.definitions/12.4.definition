@@ -1,0 +1,13 @@
+# Details for test 12.4.
+# $1 will be run_test, explain_test or mark_test.
+function test12.4() {
+    "$1" 12.4 "pipeline_command04" \
+        "Check uqcshell correctly implements the pipeline command with a pipeline that terminates by itself" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/12.4.commands" \
+        --exit 15 \
+        --stdout testfiles/12.4.stdout \
+        --stderr testfiles/empty \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}

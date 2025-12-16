@@ -1,0 +1,5 @@
+run tail -f non-existent-file testfiles/motd
+
+read <0>
+
+read <0>

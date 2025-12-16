@@ -1,0 +1,13 @@
+# Details for test 12.1.
+# $1 will be run_test, explain_test or mark_test.
+function test12.1() {
+    "$1" 12.1 "pipeline_command01" \
+        "Check uqcshell correctly implements the pipeline command with two processes in the pipeline" \
+        --timeout 10 \
+        --maxattempts 2 \
+        --stdin "testfiles/12.1.commands" \
+        --exit 15 \
+        --stdout testfiles/12.1.stdout \
+        --stderr testfiles/empty \
+        "testfiles/run_uqcshell.sh" '0.1' 'exitTerm'
+}
