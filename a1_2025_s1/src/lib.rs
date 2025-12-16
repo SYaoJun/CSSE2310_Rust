@@ -9,6 +9,8 @@ pub enum ExitError {
     Usage,
     #[error("file")]
     File,
+    #[error("variable")]
+    Variable,
 }
 #[derive(Debug)]
 pub enum ExitCodes {
@@ -25,6 +27,11 @@ pub struct Config {
     pub significant_figures: u8,
     pub for_loop: String,
     pub input_filename: String,
+    pub init_flag: bool,
+    pub figure_flag: bool,
+    pub forloop_flag: bool,
+    pub filename_flag: bool,
+    pub init_map: std::collections::HashMap<String, f32>,
 }
 
 pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
@@ -34,12 +41,14 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
         significant_figures: 0,
         for_loop: String::from(""),
         input_filename: String::from(""),
+        init_flag: false,
+        figure_flag: false,
+        forloop_flag: false,
+        filename_flag: false,
+        init_map: std::collections::HashMap::new(),
     };
     let mut i = 1;
-    let mut init_flag = false;
-    let mut figure_flag = false;
-    let mut forloop_flag = false;
-    let mut filename_flag = false;
+
     while i < args.len() {
         if args[i].is_empty() {
             return Err(ExitError::Usage);
@@ -49,23 +58,23 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 if i + 1 >= args.len() {
                     return Err(ExitError::Usage);
                 }
-                if init_flag {
+                if config.init_flag {
                     return Err(ExitError::Usage);
                 }
-                init_flag = true;
-                i += 1;
+                config.init_flag = true;
+                i += 2;
             }
             "--significantfigures" => {
                 if i + 1 >= args.len() {
                     return Err(ExitError::Usage);
                 }
-                if figure_flag {
+                if config.figure_flag {
                     return Err(ExitError::Usage);
                 }
                 if has_leading_zero(args[i + 1].as_str()) {
                     return Err(ExitError::Usage);
                 }
-                figure_flag = true;
+                config.figure_flag = true;
                 let parse_int = args[i + 1].parse::<u8>();
                 match parse_int {
                     Err(_) => {
@@ -79,27 +88,27 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                         }
                     }
                 }
-                i += 1;
+                i += 2;
             }
             "--forloop" => {
                 if i + 1 >= args.len() {
                     return Err(ExitError::Usage);
                 }
-                if forloop_flag {
+                if config.forloop_flag {
                     return Err(ExitError::Usage);
                 }
-                forloop_flag = true;
-                i += 1;
+                config.forloop_flag = true;
+                i += 2;
             }
             _ => {
                 if args[i].starts_with("--") {
                     return Err(ExitError::Usage);
                 }
-                if filename_flag {
+                if config.filename_flag {
                     return Err(ExitError::Usage);
                 }
                 config.input_filename = args[i].clone();
-                filename_flag = true;
+                config.filename_flag = true;
                 i += 1;
             }
         }
@@ -140,10 +149,32 @@ pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError>
     Err(ExitError::File)
 }
 
-pub fn check_variable(config: Config) -> Result<(), ExitError> {
-    let init_string = config.init_string;
-    let significant_figures = config.significant_figures;
-    let for_loop = config.for_loop;
-    let input_filename = config.input_filename;
+pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
+    let mut value = 0f32;
+    if config.init_flag {
+        if !config.init_string.contains("=") {
+            return Err(ExitError::Variable);
+        }
+        let split: Vec<&str> = config.init_string.split("=").collect();
+        if split.len() != 2 {
+            return Err(ExitError::Variable);
+        }
+        let var_name = split[0].trim();
+        if var_name.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        let var_value = split[1].trim();
+        if var_value.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        if !var_value
+            .chars()
+            .all(|c| c.is_digit(10) || c == '.' || c == '-')
+        {
+            return Err(ExitError::Variable);
+        }
+        value = var_value.parse::<f32>().unwrap();
+        config.init_map.insert(var_name.to_string(), value);
+    }
     Ok(())
 }
