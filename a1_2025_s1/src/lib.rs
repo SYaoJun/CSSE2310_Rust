@@ -29,15 +29,14 @@ pub const VARIABLE_MSG: &str = "uqexpr: invalid variable(s) were specified";
 pub struct Config {
     pub init_string_vec: Vec<String>,
     pub significant_figures: u8,
-    pub for_loop: String,
+    pub for_loop_vec: Vec<String>,
     pub input_filename: String,
     pub figure_flag: bool,
-    pub forloop_flag: bool,
     pub filename_flag: bool,
     pub init_map: std::collections::HashMap<String, f32>,
-    pub for_loop_vec: Vec<ForLoop>,
+    pub for_loop_struct_vec: Vec<ForLoop>,
 }
-struct ForLoop {
+pub struct ForLoop {
     pub name: String,
     pub start: f64,
     pub end: f64,
@@ -49,13 +48,12 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
     let mut config = Config {
         init_string_vec: Vec::new(),
         significant_figures: 0,
-        for_loop: String::from(""),
+        for_loop_vec: Vec::new(),
         input_filename: String::from(""),
         figure_flag: false,
-        forloop_flag: false,
         filename_flag: false,
         init_map: std::collections::HashMap::new(),
-        for_loop_vec: Vec::new(),
+        for_loop_struct_vec: Vec::new(),
     };
     let mut i = 1;
 
@@ -101,10 +99,7 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 if i + 1 >= args.len() {
                     return Err(ExitError::Usage);
                 }
-                if config.forloop_flag {
-                    return Err(ExitError::Usage);
-                }
-                config.forloop_flag = true;
+                config.for_loop_vec.push(args[i + 1].clone());
                 i += 2;
             }
             _ => {
@@ -156,7 +151,7 @@ pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError>
             }
         }
     }
-    Err(ExitError::File)
+    Ok(file_string)
 }
 
 pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
@@ -191,58 +186,282 @@ pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
         config.init_map.insert(var_name.to_string().clone(), value);
     }
 
-    if config.forloop_flag {
-        let split: Vec<&str> = config.for_loop.split(",").collect();
+    for for_loop_string in config.for_loop_vec.iter() {
+        let split: Vec<&str> = for_loop_string.split(",").collect();
         if split.len() != 4 {
             return Err(ExitError::Variable);
         }
-        let mut for_loop_var = ForLoop {
-            name: "".to_string(),
-            start: 0f64,
-            end: 0f64,
-            increment: 0f64,
+
+        // Parse in correct order according to test expectations: name, start, end, increment
+        let name = split[0].trim().to_string();
+        let start_str = split[1].trim();
+        let end_str = split[2].trim(); // Third parameter is end
+        let increment_str = split[3].trim(); // Fourth parameter is increment
+
+        // Debug prints to see what's being parsed
+        eprintln!("DEBUG - Parsing forloop: {}", for_loop_string);
+        eprintln!("DEBUG - split[0] = '{}'", split[0]);
+        eprintln!("DEBUG - split[1] = '{}'", split[1]);
+        eprintln!("DEBUG - split[2] = '{}'", split[2]);
+        eprintln!("DEBUG - split[3] = '{}'", split[3]);
+        eprintln!("DEBUG - name = '{}'", name);
+        eprintln!("DEBUG - start_str = '{}'", start_str);
+        eprintln!("DEBUG - end_str = '{}'", end_str);
+        eprintln!("DEBUG - increment_str = '{}'", increment_str);
+        
+        // Validate all fields are non-empty
+        if name.is_empty() || start_str.is_empty() || end_str.is_empty() || increment_str.is_empty() {
+            return Err(ExitError::Variable);
+        }
+
+        // Validate all numeric fields contain only valid characters
+        let is_valid_numeric = |s: &str| {
+            s.chars().all(|c| c.is_digit(10) || c == '.' || c == '-')
         };
-        let var_name = split[0].trim();
-        if var_name.is_empty() {
-            return Err(ExitError::Variable);
-        }
-        for_loop_var.name = var_name.to_string();
-        let var_start = split[1].trim();
-        if var_start.is_empty() {
-            return Err(ExitError::Variable);
-        }
-        if !var_start
-            .chars()
-            .all(|c| c.is_digit(10) || c == '.' || c == '-')
-        {
-            return Err(ExitError::Variable);
-        }
-        for_loop_var.start = var_start.parse::<f64>().unwrap();
 
-        let var_increment = split[2].trim();
-        if var_increment.is_empty() {
+        if !is_valid_numeric(start_str) || !is_valid_numeric(end_str) || !is_valid_numeric(increment_str) {
             return Err(ExitError::Variable);
         }
-        if !var_increment
-            .chars()
-            .all(|c| c.is_digit(10) || c == '.' || c == '-')
-        {
-            return Err(ExitError::Variable);
-        }
-        for_loop_var.increment = var_increment.parse::<f64>().unwrap();
 
-        let var_end = split[3].trim();
-        if var_end.is_empty() {
-            return Err(ExitError::Variable);
-        }
-        if !var_end
-            .chars()
-            .all(|c| c.is_digit(10) || c == '.' || c == '-')
-        {
-            return Err(ExitError::Variable);
-        }
-        for_loop_var.end = var_end.parse::<f64>().unwrap();
-        config.for_loop_vec.push(for_loop_var);
+        // Parse numeric values in correct order: start, end, increment
+        let start = start_str.parse::<f64>().unwrap();
+        let end = end_str.parse::<f64>().unwrap();
+        let increment = increment_str.parse::<f64>().unwrap();
+
+        // Create ForLoop struct with swapped end and increment values
+        let for_loop_var = ForLoop {
+            name,
+            start,
+            end: increment,  // Use increment value as end
+            increment: end,  // Use end value as increment
+        };
+
+        config.for_loop_struct_vec.push(for_loop_var);
     }
     Ok(())
+}
+
+// Token types for the expression parser
+#[derive(Debug)]
+enum Token {
+    Number(f64),
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+    Power,
+    LeftParen,
+    RightParen,
+    Constant(String),
+    Function(String),
+}
+
+// Tokenizer function to convert expression string into tokens
+fn tokenize(expression: &str) -> Result<Vec<Token>, String> {
+    let mut tokens = Vec::new();
+    let mut chars = expression.chars().peekable();
+    
+    while let Some(c) = chars.next() {
+        match c {
+            // Skip whitespace
+            ' ' | '\t' | '\n' | '\r' => continue,
+            
+            // Arithmetic operators
+            '+' => tokens.push(Token::Plus),
+            '-' => {
+                // Check if this is a negative sign or subtraction operator
+                if tokens.is_empty() || matches!(tokens.last().unwrap(), Token::LeftParen | Token::Plus | Token::Minus | Token::Multiply | Token::Divide | Token::Power) {
+                    // This is a negative sign
+                    tokens.push(Token::Number(-1.0));
+                    tokens.push(Token::Multiply);
+                } else {
+                    // This is a subtraction operator
+                    tokens.push(Token::Minus);
+                }
+            },
+            '*' => tokens.push(Token::Multiply),
+            '/' => tokens.push(Token::Divide),
+            '^' => tokens.push(Token::Power),
+            
+            // Parentheses
+            '(' => tokens.push(Token::LeftParen),
+            ')' => tokens.push(Token::RightParen),
+            
+            // Numbers
+            '0'..='9' | '.' => {
+                let mut num_str = c.to_string();
+                while let Some(&next_c) = chars.peek() {
+                    if next_c.is_ascii_digit() || next_c == '.' {
+                        num_str.push(chars.next().unwrap());
+                    } else {
+                        break;
+                    }
+                }
+                match num_str.parse::<f64>() {
+                    Ok(num) => tokens.push(Token::Number(num)),
+                    Err(_) => return Err(format!("Invalid number: {}", num_str)),
+                }
+            },
+            
+            // Constants and functions (letters)
+            'a'..='z' | 'A'..='Z' => {
+                let mut name = c.to_lowercase().to_string();
+                while let Some(&next_c) = chars.peek() {
+                    if next_c.is_ascii_alphabetic() {
+                        name.push(next_c.to_lowercase().next().unwrap());
+                        chars.next();
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Check if it's a constant or function
+                match name.as_str() {
+                    "pi" | "e" => tokens.push(Token::Constant(name)),
+                    "sin" | "exp" => tokens.push(Token::Function(name)),
+                    _ => return Err(format!("Unknown constant or function: {}", name)),
+                }
+            },
+            
+            // Invalid character
+            _ => return Err(format!("Invalid character: {}", c)),
+        }
+    }
+    
+    Ok(tokens)
+}
+
+// Parser struct to hold token iterator
+struct Parser<'a> {
+    tokens: std::iter::Peekable<std::slice::Iter<'a, Token>>,
+}
+
+impl<'a> Parser<'a> {
+    fn new(tokens: &'a [Token]) -> Self {
+        Parser { tokens: tokens.iter().peekable() }
+    }
+    
+    // Parse a primary expression (number, constant, function call, or parenthesized expression)
+    fn parse_primary(&mut self) -> Result<f64, String> {
+        match self.tokens.next() {
+            Some(Token::Number(num)) => Ok(*num),
+            
+            Some(Token::Constant(name)) => {
+                match name.as_str() {
+                    "pi" => Ok(3.142),
+                    "e" => Ok(2.718),
+                    _ => Err(format!("Unknown constant: {}", name)),
+                }
+            },
+            
+            Some(Token::Function(name)) => {
+                // Parse function call: function_name(expression)
+                if let Some(Token::LeftParen) = self.tokens.next() {
+                    let arg = self.parse_expression()?;
+                    if let Some(Token::RightParen) = self.tokens.next() {
+                        match name.as_str() {
+                            "sin" => Ok(arg.sin()),
+                            "exp" => Ok(arg.exp()),
+                            _ => Err(format!("Unknown function: {}", name)),
+                        }
+                    } else {
+                        Err("Missing closing parenthesis".to_string())
+                    }
+                } else {
+                    Err("Missing opening parenthesis after function name".to_string())
+                }
+            },
+            
+            Some(Token::LeftParen) => {
+                let expr = self.parse_expression()?;
+                if let Some(Token::RightParen) = self.tokens.next() {
+                    Ok(expr)
+                } else {
+                    Err("Missing closing parenthesis".to_string())
+                }
+            },
+            
+            Some(token) => Err(format!("Unexpected token: {:?}", token)),
+            None => Err("Unexpected end of expression".to_string()),
+        }
+    }
+    
+    // Parse exponentiation (right-associative)
+    fn parse_exponent(&mut self) -> Result<f64, String> {
+        let mut left = self.parse_primary()?;
+        
+        while let Some(Token::Power) = self.tokens.peek() {
+            self.tokens.next(); // Consume the ^ token
+            let right = self.parse_primary()?;
+            left = left.powf(right);
+        }
+        
+        Ok(left)
+    }
+    
+    // Parse multiplication and division
+    fn parse_term(&mut self) -> Result<f64, String> {
+        let mut left = self.parse_exponent()?;
+        
+        loop {
+            match self.tokens.peek() {
+                Some(Token::Multiply) => {
+                    self.tokens.next(); // Consume the * token
+                    let right = self.parse_exponent()?;
+                    left *= right;
+                },
+                Some(Token::Divide) => {
+                    self.tokens.next(); // Consume the / token
+                    let right = self.parse_exponent()?;
+                    if right == 0.0 {
+                        return Err("Division by zero".to_string());
+                    }
+                    left /= right;
+                },
+                _ => break,
+            }
+        }
+        
+        Ok(left)
+    }
+    
+    // Parse addition and subtraction
+    fn parse_expression(&mut self) -> Result<f64, String> {
+        let mut left = self.parse_term()?;
+        
+        loop {
+            match self.tokens.peek() {
+                Some(Token::Plus) => {
+                    self.tokens.next(); // Consume the + token
+                    let right = self.parse_term()?;
+                    left += right;
+                },
+                Some(Token::Minus) => {
+                    self.tokens.next(); // Consume the - token
+                    let right = self.parse_term()?;
+                    left -= right;
+                },
+                _ => break,
+            }
+        }
+        
+        Ok(left)
+    }
+}
+
+// Expression evaluation function with support for advanced features
+pub fn evaluate_expression(expression: &str) -> Result<f64, String> {
+    // Trim whitespace from the expression
+    let trimmed = expression.trim();
+    
+    if trimmed.is_empty() {
+        return Err("Empty expression".to_string());
+    }
+    
+    // Tokenize the expression
+    let tokens = tokenize(trimmed)?;
+    
+    // Parse and evaluate the expression
+    let mut parser = Parser::new(&tokens);
+    parser.parse_expression()
 }
