@@ -11,41 +11,51 @@ pub enum ExitError {
     File,
     #[error("variable")]
     Variable,
+
+    #[error("duplicate variable")]
+    Duplicate,
 }
 #[derive(Debug)]
 pub enum ExitCodes {
     Usage = 18,
     InvalidFile = 5,
     Variable = 14,
+    Duplicate = 19,
 }
-
+pub const DUPLICATE_MSG: &str = "uqexpr: duplicate variables were detected";
 pub const USAGE_MSG: &str = "Usage: ./uqexpr [--init string] [--significantfigures 2..8] [--forloop string] [inputfilename]";
 pub const VARIABLE_MSG: &str = "uqexpr: invalid variable(s) were specified";
 // 是不是可以自己定义错误处理枚举类型
 pub struct Config {
-    pub init_string: String,
+    pub init_string_vec: Vec<String>,
     pub significant_figures: u8,
     pub for_loop: String,
     pub input_filename: String,
-    pub init_flag: bool,
     pub figure_flag: bool,
     pub forloop_flag: bool,
     pub filename_flag: bool,
     pub init_map: std::collections::HashMap<String, f32>,
+    pub for_loop_vec: Vec<ForLoop>,
+}
+struct ForLoop {
+    pub name: String,
+    pub start: f64,
+    pub end: f64,
+    pub increment: f64,
 }
 
 pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
     let args: Vec<String> = std::env::args().collect();
     let mut config = Config {
-        init_string: String::from(""),
+        init_string_vec: Vec::new(),
         significant_figures: 0,
         for_loop: String::from(""),
         input_filename: String::from(""),
-        init_flag: false,
         figure_flag: false,
         forloop_flag: false,
         filename_flag: false,
         init_map: std::collections::HashMap::new(),
+        for_loop_vec: Vec::new(),
     };
     let mut i = 1;
 
@@ -58,10 +68,7 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 if i + 1 >= args.len() {
                     return Err(ExitError::Usage);
                 }
-                if config.init_flag {
-                    return Err(ExitError::Usage);
-                }
-                config.init_flag = true;
+                config.init_string_vec.push(args[i + 1].clone());
                 i += 2;
             }
             "--significantfigures" => {
@@ -150,18 +157,21 @@ pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError>
 }
 
 pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
-    let mut value = 0f32;
-    if config.init_flag {
-        if !config.init_string.contains("=") {
+    for init_string in config.init_string_vec.iter() {
+        let mut value = 0f32;
+        if !init_string.contains("=") {
             return Err(ExitError::Variable);
         }
-        let split: Vec<&str> = config.init_string.split("=").collect();
+        let split: Vec<&str> = init_string.split("=").collect();
         if split.len() != 2 {
             return Err(ExitError::Variable);
         }
         let var_name = split[0].trim();
-        if var_name.is_empty() {
+        if var_name.is_empty() || var_name.len() > 20 {
             return Err(ExitError::Variable);
+        }
+        if config.init_map.contains_key(var_name) {
+            return Err(ExitError::Duplicate);
         }
         let var_value = split[1].trim();
         if var_value.is_empty() {
@@ -174,7 +184,62 @@ pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
             return Err(ExitError::Variable);
         }
         value = var_value.parse::<f32>().unwrap();
-        config.init_map.insert(var_name.to_string(), value);
+
+        config.init_map.insert(var_name.to_string().clone(), value);
+    }
+
+    if config.forloop_flag {
+        let split: Vec<&str> = config.for_loop.split(",").collect();
+        if split.len() != 4 {
+            return Err(ExitError::Variable);
+        }
+        let mut for_loop_var = ForLoop {
+            name: "".to_string(),
+            start: 0f64,
+            end: 0f64,
+            increment: 0f64,
+        };
+        let var_name = split[0].trim();
+        if var_name.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        for_loop_var.name = var_name.to_string();
+        let var_start = split[1].trim();
+        if var_start.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        if !var_start
+            .chars()
+            .all(|c| c.is_digit(10) || c == '.' || c == '-')
+        {
+            return Err(ExitError::Variable);
+        }
+        for_loop_var.start = var_start.parse::<f64>().unwrap();
+
+        let var_increment = split[2].trim();
+        if var_increment.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        if !var_increment
+            .chars()
+            .all(|c| c.is_digit(10) || c == '.' || c == '-')
+        {
+            return Err(ExitError::Variable);
+        }
+        for_loop_var.increment = var_increment.parse::<f64>().unwrap();
+
+        let var_end = split[3].trim();
+        if var_end.is_empty() {
+            return Err(ExitError::Variable);
+        }
+        if !var_end
+            .chars()
+            .all(|c| c.is_digit(10) || c == '.' || c == '-')
+        {
+            return Err(ExitError::Variable);
+        }
+        for_loop_var.end = var_end.parse::<f64>().unwrap();
+        config.for_loop_vec.push(for_loop_var);
     }
     Ok(())
 }

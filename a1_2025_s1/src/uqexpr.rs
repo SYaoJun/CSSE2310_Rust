@@ -20,8 +20,21 @@ fn main() {
         }
     }
     let res = check_variable(&mut config);
-    if res.is_err() {
-        eprintln!("{}", VARIABLE_MSG);
-        exit(ExitCodes::Variable as i32);
+    match res {
+        Err(ExitError::Variable) => {
+            eprintln!("{}", VARIABLE_MSG);
+            exit(ExitCodes::Variable as i32);
+        }
+        Err(ExitError::Duplicate) => {
+            eprintln!("{}", DUPLICATE_MSG);
+            exit(ExitCodes::Duplicate as i32);
+        }
+        Ok(_) => {
+            eprintln!("uqexpr: ok");
+        }
+        _ => {
+            eprintln!("uqexpr: unknown error");
+            exit(ExitCodes::Usage as i32);
+        }
     }
 }
