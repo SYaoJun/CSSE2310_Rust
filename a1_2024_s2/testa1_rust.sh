@@ -117,7 +117,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cp target/debug/uqentropy .
+cp ../target/debug/uqentropy .
 # 拷贝是否成功判断
 if [ $? -ne 0 ]; then
     echo "Failed to copy uqentropy executable"
