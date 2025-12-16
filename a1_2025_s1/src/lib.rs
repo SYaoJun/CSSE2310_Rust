@@ -108,6 +108,9 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
                 i += 2;
             }
             _ => {
+                if i != args.len() - 1 {
+                    return Err(ExitError::Usage);
+                }
                 if args[i].starts_with("--") {
                     return Err(ExitError::Usage);
                 }
