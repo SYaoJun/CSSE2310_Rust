@@ -1,6 +1,8 @@
 use anyhow::Result;
-// BufRead is re-imported locally where needed in uqexpr.rs; keep lib.rs minimal.
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use thiserror::Error;
+use std::f64::consts::{E, PI};
 
 #[derive(Debug, Error)]
 pub enum ExitError {
@@ -27,6 +29,7 @@ pub const VARIABLE_MSG: &str = "uqexpr: invalid variable(s) were specified";
 // 是不是可以自己定义错误处理枚举类型
 pub struct Config {
     pub init_string_vec: Vec<String>,
+    pub init_order: Vec<String>,
     pub significant_figures: u8,
     pub for_loop_vec: Vec<String>,
     pub input_filename: String,
@@ -37,6 +40,7 @@ pub struct Config {
 }
 pub struct ForLoop {
     pub name: String,
+    pub current: f64,
     pub start: f64,
     pub end: f64,
     pub increment: f64,
@@ -44,9 +48,11 @@ pub struct ForLoop {
 
 pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
     let args: Vec<String> = std::env::args().collect();
+
     let mut config = Config {
         init_string_vec: Vec::new(),
-        significant_figures: 0,
+        init_order: Vec::new(),
+        significant_figures: 4,
         for_loop_vec: Vec::new(),
         input_filename: String::from(""),
         figure_flag: false,
@@ -134,91 +140,168 @@ pub fn has_leading_zero(s: &str) -> bool {
 }
 
 pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError> {
-    // For the assignment tests, uqexpr should treat an unreadable file as an
-    // error (ExitError::File), but the provided unit test for this helper
-    // currently expects all calls to return Err. To keep the library tests
-    // passing without changing the binary behaviour, we conservatively
-    // implement this helper as always returning an error.
-    let _ = filename;
-    Err(ExitError::File)
+    let file = File::open(filename);
+    if file.is_err() {
+        return Err(ExitError::File);
+    }
+    let reader = BufReader::new(file.unwrap());
+    let mut file_string: Vec<String> = vec![];
+    for line_result in reader.lines() {
+        match line_result {
+            Ok(line) => {
+                file_string.push(line);
+            }
+            Err(_) => {
+                return Err(ExitError::File);
+            }
+        }
+    }
+    Ok(file_string)
+}
+
+// Helper function to validate variable names
+fn is_valid_var_name(name: &str) -> bool {
+    if name.is_empty() || name.len() > 20 {
+        return false;
+    }
+    
+    // First character must be a letter
+    if !name.chars().next().map_or(false, |c| c.is_ascii_alphabetic()) {
+        return false;
+    }
+    
+    // Remaining characters must be alphanumeric or underscore
+    name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+// Helper function to validate numeric strings
+fn is_valid_numeric(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    
+    let mut has_decimal = false;
+    let mut has_digit = false;
+    let mut chars = s.chars().peekable();
+    
+    // Handle optional sign
+    if let Some('-') = chars.peek() {
+        chars.next();
+    }
+    
+    // Check each character
+    while let Some(&c) = chars.peek() {
+        if c == '.' {
+            if has_decimal {
+                return false; // Multiple decimal points
+            }
+            has_decimal = true;
+        } else if !c.is_ascii_digit() {
+            return false; // Invalid character
+        } else {
+            has_digit = true;
+        }
+        chars.next();
+    }
+    
+    has_digit // Must have at least one digit
 }
 
 pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
-    for init_string in config.init_string_vec.iter() {
-        if !init_string.contains("=") {
+    // Check for duplicate variable definitions in --init
+    let mut seen_vars = std::collections::HashSet::new();
+    
+    for init_string in &config.init_string_vec {
+        let parts: Vec<&str> = init_string.splitn(2, '=').collect();
+        if parts.len() != 2 {
             return Err(ExitError::Variable);
         }
-        let split: Vec<&str> = init_string.split("=").collect();
-        if split.len() != 2 {
+        
+        let var_name = parts[0].trim();
+        let var_value = parts[1].trim();
+        
+        // Validate variable name
+        if !is_valid_var_name(var_name) {
             return Err(ExitError::Variable);
         }
-        let var_name = split[0].trim();
-        if var_name.is_empty() || var_name.len() > 20 {
-            return Err(ExitError::Variable);
-        }
-        if config.init_map.contains_key(var_name) {
+        
+        // Check for duplicate variable names
+        if !seen_vars.insert(var_name) {
             return Err(ExitError::Duplicate);
         }
-        let var_value = split[1].trim();
-        if var_value.is_empty() {
+        
+        // Validate variable value
+        if var_value.is_empty() || !is_valid_numeric(var_value) {
             return Err(ExitError::Variable);
         }
-        if !var_value
-            .chars()
-            .all(|c| c.is_digit(10) || c == '.' || c == '-')
-        {
-            return Err(ExitError::Variable);
-        }
-        let value = var_value.parse::<f64>().unwrap();
-        config.init_map.insert(var_name.to_string().clone(), value);
+        
+        // Parse and store the value
+        let value = var_value.parse::<f64>().map_err(|_| ExitError::Variable)?;
+        config.init_map.insert(var_name.to_string(), value);
+        config.init_order.push(var_name.to_string());
     }
-
-    for for_loop_string in config.for_loop_vec.iter() {
-        let split: Vec<&str> = for_loop_string.split(",").collect();
-        if split.len() != 4 {
+    
+    // Process for loop variables
+    for for_loop_str in &config.for_loop_vec {
+        let parts: Vec<&str> = for_loop_str.split(',').collect();
+        if parts.len() != 4 {
             return Err(ExitError::Variable);
         }
-
-        // Parse in correct order according to test expectations: name, start, end, increment
-        let name = split[0].trim().to_string();
-        let start_str = split[1].trim();
-        let end_str = split[2].trim(); // Third parameter is end
-        let increment_str = split[3].trim(); // Fourth parameter is increment
-
-        // Validate all fields are non-empty
-        if name.is_empty() || name.len() > 20 || start_str.is_empty() || end_str.is_empty() || increment_str.is_empty() {
+        
+        let name = parts[0].trim();
+        let start_str = parts[1].trim();
+        let end_str = parts[2].trim();
+        let incr_str = parts[3].trim();
+        
+        // Validate loop variable name
+        if !is_valid_var_name(name) {
             return Err(ExitError::Variable);
         }
-
-        // Validate all numeric fields contain only valid characters
-        let is_valid_numeric = |s: &str| {
-            s.chars().all(|c| c.is_digit(10) || c == '.' || c == '-')
-        };
-
-        if !is_valid_numeric(start_str) || !is_valid_numeric(end_str) || !is_valid_numeric(increment_str) {
+        
+        // Check for duplicate loop variable names
+        if !seen_vars.insert(name) {
+            return Err(ExitError::Duplicate);
+        }
+        
+        // Validate numeric values
+        if !is_valid_numeric(start_str) || !is_valid_numeric(end_str) || !is_valid_numeric(incr_str) {
             return Err(ExitError::Variable);
         }
-
-        // Parse numeric values in correct order: start, end, increment
-        let start = start_str.parse::<f64>().unwrap();
-        let end = end_str.parse::<f64>().unwrap();
-        let increment = increment_str.parse::<f64>().unwrap();
-
-        // Check if increment is zero
+        
+        // Parse numeric values
+        let start = start_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
+        let end = end_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
+        let increment = incr_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
+        
+        // Check for zero increment
         if increment == 0.0 {
             return Err(ExitError::Variable);
         }
 
-        // Create ForLoop struct with correct values
-        let for_loop_var = ForLoop {
-            name,
+        // Validate increment direction (must make progress toward end)
+        if start < end {
+            if increment < 0.0 {
+                return Err(ExitError::Variable);
+            }
+        } else if start > end {
+            if increment > 0.0 {
+                return Err(ExitError::Variable);
+            }
+        }
+        
+        // Add to for_loop_struct_vec
+        config.for_loop_struct_vec.push(ForLoop {
+            name: name.to_string(),
+            current: start,
             start,
             end,
             increment,
-        };
+        });
 
-        config.for_loop_struct_vec.push(for_loop_var);
+        // Make loop variables available for expression evaluation.
+        config.init_map.insert(name.to_string(), start);
     }
+    
     Ok(())
 }
 
@@ -336,8 +419,8 @@ impl<'a> Parser<'a> {
             
             Some(Token::Constant(name)) => {
                 match name.as_str() {
-                    "pi" => Ok(3.142),
-                    "e" => Ok(2.718),
+                    "pi" => Ok(PI),
+                    "e" => Ok(E),
                     _ => Err(format!("Unknown constant: {}", name)),
                 }
             },
