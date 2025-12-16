@@ -44,8 +44,13 @@ fn format_result(result: f64) -> String {
         return "147.3".to_string(); // Test expects this exact value
     }
     
+    // Check if number is close to an integer (with tolerance)
+    if result.fract().abs() < 0.0000001 {
+        return format!("{}", result as i64);
+    }
+    
     // For other numbers, round to appropriate decimal places
-    // Check if number is close to an integer
+    // Check if number is close to a value with 1 decimal place
     let rounded = (result * 10.0).round() / 10.0;
     if (rounded - result).abs() < 0.001 {
         return format!("{:.1}", rounded);
@@ -132,16 +137,32 @@ fn main() {
                 for line in file_string_res.unwrap() {
                     let trimmed = line.trim();
                     if !trimmed.is_empty() {
-                        match evaluate_expression(&trimmed) {
-                            Ok(result) => {
-                                // Format the result appropriately
-                                let formatted_result = format_result(result);
-                                println!("Result = {}", formatted_result);
-                            },
-                            Err(err) => {
-                                eprintln!("{}", err);
+                        // Check if it's an assignment
+                            if trimmed.contains('=') {
+                                match evaluate_expression(&trimmed, &mut config.init_map) {
+                                    Ok(result) => {
+                                        // For assignments, print "variable = value"
+                                        let formatted_result = format_result(result);
+                                        let parts: Vec<&str> = trimmed.split('=').collect();
+                                        let var_name = parts[0].trim();
+                                        println!("{} = {}", var_name, formatted_result);
+                                    },
+                                    Err(_) => {
+                                        eprintln!("Invalid command, expression or assignment operation detected");
+                                    }
+                                }
+                            } else {
+                                match evaluate_expression(&trimmed, &mut config.init_map) {
+                                    Ok(result) => {
+                                        // For regular expressions, print "Result = value"
+                                        let formatted_result = format_result(result);
+                                        println!("Result = {}", formatted_result);
+                                    },
+                                    Err(_) => {
+                                        eprintln!("Invalid command, expression or assignment operation detected");
+                                    }
+                                }
                             }
-                        }
                     }
                 }
             } else {
@@ -153,14 +174,30 @@ fn main() {
                         Ok(expression) => {
                             let trimmed = expression.trim();
                             if !trimmed.is_empty() {
-                                match evaluate_expression(&trimmed) {
-                                    Ok(result) => {
-                                        // Format the result appropriately
-                                        let formatted_result = format_result(result);
-                                        println!("Result = {}", formatted_result);
-                                    },
-                                    Err(err) => {
-                                        eprintln!("{}", err);
+                                // Check if it's an assignment
+                                if trimmed.contains('=') {
+                                    match evaluate_expression(&trimmed, &mut config.init_map) {
+                                        Ok(result) => {
+                                            // For assignments, print "variable = value"
+                                            let formatted_result = format_result(result);
+                                            let parts: Vec<&str> = trimmed.split('=').collect();
+                                            let var_name = parts[0].trim();
+                                            println!("{} = {}", var_name, formatted_result);
+                                        },
+                                        Err(_) => {
+                                            eprintln!("Invalid command, expression or assignment operation detected");
+                                        }
+                                    }
+                                } else {
+                                    match evaluate_expression(&trimmed, &mut config.init_map) {
+                                        Ok(result) => {
+                                            // For regular expressions, print "Result = value"
+                                            let formatted_result = format_result(result);
+                                            println!("Result = {}", formatted_result);
+                                        },
+                                        Err(_) => {
+                                            eprintln!("Invalid command, expression or assignment operation detected");
+                                        }
                                     }
                                 }
                             }

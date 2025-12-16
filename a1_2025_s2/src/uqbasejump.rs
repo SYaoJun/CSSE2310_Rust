@@ -265,6 +265,18 @@ fn process_stdin(args: &Arguments) -> Result<()> {
     let mut input = String::new();
     let mut history: Vec<(String, String, u32)> = Vec::new();
 
+    // Interactive session can change bases and output bases at runtime.
+    let mut input_base = args.input_base;
+    let mut output_bases = args.output_bases.clone();
+
+    // When a ':' command is being typed, we buffer it here until newline.
+    let mut in_command = false;
+    let mut command = String::new();
+
+    // Tracks whether the last key press cleared the expression/input (ESC).
+    // A following newline should evaluate the expression "0".
+    let mut just_cleared = false;
+
     let stdin = io::stdin();
     for byte in stdin.lock().bytes() {
         let b = byte?;
@@ -275,21 +287,42 @@ fn process_stdin(args: &Arguments) -> Result<()> {
         }
 
         if ch == '\n' {
+            if in_command {
+                handle_inline_command(
+                    &mut expr,
+                    &mut input,
+                    &mut history,
+                    &mut input_base,
+                    &mut output_bases,
+                    &command,
+                );
+                command.clear();
+                in_command = false;
+                just_cleared = false;
+                continue;
+            }
+
             // Evaluate current expression+input if anything present
-            if !expr.is_empty() || !input.is_empty() {
-                let combined = format!("{}{}", expr, input);
-                match convert_expression(&combined, args.input_base, DECIMAL_BASE)
+            if !expr.is_empty() || !input.is_empty() || just_cleared {
+                let combined = if expr.is_empty() && input.is_empty() && just_cleared {
+                    "0".to_string()
+                } else {
+                    format!("{}{}", expr, input)
+                };
+                match convert_expression(&combined, input_base, DECIMAL_BASE)
                     .and_then(|e| evaluate_expression(&e))
                 {
                     Ok(result) => {
                         let expr_in_base =
-                            convert_expression(&combined, DECIMAL_BASE, args.input_base)
+                            convert_expression(&combined, input_base, input_base)
                                 .unwrap_or_else(|_| combined.clone());
-                        println!("Expression (base {}): {}", args.input_base, expr_in_base);
-                        let result_converted = convert_int_to_str_any_base(result, args.input_base);
-                        println!("Result (base {}): {}", args.input_base, result_converted);
-                        print_in_bases(result, args);
-                        history.push((expr_in_base, result_converted, args.input_base));
+                        println!("Expression (base {}): {}", input_base, expr_in_base);
+                        let result_converted =
+                            convert_int_to_str_any_base(result, input_base);
+                        println!("Result (base {}): {}", input_base, result_converted);
+                        print_in_bases_dynamic(result, &output_bases);
+                        history.push((expr_in_base, result_converted, input_base));
+                        just_cleared = false;
                     }
                     Err(_) => {
                         eprint!("{}", EXPRESSION_ERROR.replace("%s", &combined));
@@ -301,10 +334,18 @@ fn process_stdin(args: &Arguments) -> Result<()> {
             continue;
         }
 
+        if in_command {
+            // Inside a ':' command; accumulate until newline.
+            command.push(ch);
+            just_cleared = false;
+            continue;
+        }
+
         if ch == 127 as char {
             // backspace
             input.pop();
-            print_state(&expr, &input, args);
+            print_state(&expr, &input, input_base, &output_bases);
+            just_cleared = false;
             continue;
         }
 
@@ -312,13 +353,16 @@ fn process_stdin(args: &Arguments) -> Result<()> {
             // escape clears both
             expr.clear();
             input.clear();
-            print_state(&expr, &input, args);
+            print_state(&expr, &input, input_base, &output_bases);
+            just_cleared = true;
             continue;
         }
 
         if ch == ':' {
-            // commands not used in these tests; ignore but keep state print
-            print_state(&expr, &input, args);
+            // Start a command; the first ':' is not part of the command body.
+            in_command = true;
+            command.clear();
+            just_cleared = false;
             continue;
         }
 
@@ -328,38 +372,89 @@ fn process_stdin(args: &Arguments) -> Result<()> {
                 input.clear();
             }
             expr.push(ch);
-            print_state(&expr, &input, args);
+            print_state(&expr, &input, input_base, &output_bases);
+            just_cleared = false;
             continue;
         }
 
         // alphanumeric input
         let valid_digit = char_to_digit(ch)
-            .filter(|d| (*d as u32) < args.input_base)
+            .filter(|d| (*d as u32) < input_base)
             .is_some();
         if valid_digit {
             input.push(ch);
-            print_state(&expr, &input, args);
+            print_state(&expr, &input, input_base, &output_bases);
         } else {
             // invalid character: keep state, still print
-            print_state(&expr, &input, args);
+            print_state(&expr, &input, input_base, &output_bases);
         }
+        just_cleared = false;
     }
 
     Ok(())
 }
 
-fn print_state(expr: &str, input: &str, args: &Arguments) {
-    println!("Expression (base {}): {}", args.input_base, expr);
-    println!("Input (base {}): {}", args.input_base, input);
+fn print_state(expr: &str, input: &str, input_base: u32, output_bases: &[u32]) {
+    println!("Expression (base {}): {}", input_base, expr);
+    println!("Input (base {}): {}", input_base, input);
 
     let val = if input.is_empty() {
         0
     } else {
-        convert_str_to_int_any_base(input, args.input_base).unwrap_or(0)
+        convert_str_to_int_any_base(input, input_base).unwrap_or(0)
     };
-    for base in &args.output_bases {
+    for base in output_bases {
         let converted = convert_int_to_str_any_base(val, *base);
         println!("Base {}: {}", base, converted);
+    }
+}
+
+fn handle_inline_command(
+    expr: &mut String,
+    input: &mut String,
+    history: &[(String, String, u32)],
+    input_base: &mut u32,
+    output_bases: &mut Vec<u32>,
+    command: &str,
+) {
+    let mut chars = command.chars();
+    let cmd = chars.next().unwrap_or_default();
+    let rest = chars.as_str().trim();
+
+    match cmd {
+        // Change input base, clearing current expression/input and printing new state.
+        'i' => {
+            match check_base(rest) {
+                Some(base) => {
+                    *input_base = base;
+                    expr.clear();
+                    input.clear();
+                    print_state(expr, input, *input_base, output_bases);
+                }
+                None => {
+                    // Invalid base: leave state unchanged, but still echo current state.
+                    print_state(expr, input, *input_base, output_bases);
+                }
+            }
+        }
+        // Change output bases, preserving base but clearing current expression/input and
+        // printing new state in the updated base list.
+        'o' => {
+            if let Ok(bases) = parse_output_bases(rest) {
+                *output_bases = bases;
+                expr.clear();
+                input.clear();
+                print_state(expr, input, *input_base, output_bases);
+            }
+        }
+        // Show history of evaluated expressions and their results.
+        'h' => {
+            for (e_str, r_str, base) in history {
+                println!("Expression (base {}): {}", base, e_str);
+                println!("Result (base {}): {}", base, r_str);
+            }
+        }
+        _ => {}
     }
 }
 
@@ -443,6 +538,13 @@ fn print_result(base: u32, result: &str) {
 
 fn print_in_bases(value: u128, args: &Arguments) {
     for base in &args.output_bases {
+        let result = convert_int_to_str_any_base(value, *base);
+        println!("Base {}: {}", base, result);
+    }
+}
+
+fn print_in_bases_dynamic(value: u128, output_bases: &[u32]) {
+    for base in output_bases {
         let result = convert_int_to_str_any_base(value, *base);
         println!("Base {}: {}", base, result);
     }

@@ -33,7 +33,7 @@ pub struct Config {
     pub input_filename: String,
     pub figure_flag: bool,
     pub filename_flag: bool,
-    pub init_map: std::collections::HashMap<String, f32>,
+    pub init_map: std::collections::HashMap<String, f64>,
     pub for_loop_struct_vec: Vec<ForLoop>,
 }
 pub struct ForLoop {
@@ -156,7 +156,7 @@ pub fn check_input_filename(filename: &String) -> Result<Vec<String>, ExitError>
 
 pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
     for init_string in config.init_string_vec.iter() {
-        let mut value = 0f32;
+        let mut value = 0f64;
         if !init_string.contains("=") {
             return Err(ExitError::Variable);
         }
@@ -181,7 +181,7 @@ pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
         {
             return Err(ExitError::Variable);
         }
-        value = var_value.parse::<f32>().unwrap();
+        value = var_value.parse::<f64>().unwrap();
 
         config.init_map.insert(var_name.to_string().clone(), value);
     }
@@ -254,6 +254,8 @@ enum Token {
     RightParen,
     Constant(String),
     Function(String),
+    Variable(String),
+    Equals,
 }
 
 // Tokenizer function to convert expression string into tokens
@@ -270,7 +272,7 @@ fn tokenize(expression: &str) -> Result<Vec<Token>, String> {
             '+' => tokens.push(Token::Plus),
             '-' => {
                 // Check if this is a negative sign or subtraction operator
-                if tokens.is_empty() || matches!(tokens.last().unwrap(), Token::LeftParen | Token::Plus | Token::Minus | Token::Multiply | Token::Divide | Token::Power) {
+                if tokens.is_empty() || matches!(tokens.last().unwrap(), Token::LeftParen | Token::Plus | Token::Minus | Token::Multiply | Token::Divide | Token::Power | Token::Equals) {
                     // This is a negative sign
                     tokens.push(Token::Number(-1.0));
                     tokens.push(Token::Multiply);
@@ -286,6 +288,9 @@ fn tokenize(expression: &str) -> Result<Vec<Token>, String> {
             // Parentheses
             '(' => tokens.push(Token::LeftParen),
             ')' => tokens.push(Token::RightParen),
+            
+            // Equals operator for assignment
+            '=' => tokens.push(Token::Equals),
             
             // Numbers
             '0'..='9' | '.' => {
@@ -303,23 +308,24 @@ fn tokenize(expression: &str) -> Result<Vec<Token>, String> {
                 }
             },
             
-            // Constants and functions (letters)
+            // Constants, functions, and variables (letters)
             'a'..='z' | 'A'..='Z' => {
-                let mut name = c.to_lowercase().to_string();
+                let mut name = c.to_string();
                 while let Some(&next_c) = chars.peek() {
                     if next_c.is_ascii_alphabetic() {
-                        name.push(next_c.to_lowercase().next().unwrap());
+                        name.push(next_c);
                         chars.next();
                     } else {
                         break;
                     }
                 }
                 
-                // Check if it's a constant or function
-                match name.as_str() {
-                    "pi" | "e" => tokens.push(Token::Constant(name)),
-                    "sin" | "exp" => tokens.push(Token::Function(name)),
-                    _ => return Err(format!("Unknown constant or function: {}", name)),
+                // Check if it's a constant or function, otherwise treat as variable
+                let lowercase_name = name.to_lowercase();
+                match lowercase_name.as_str() {
+                    "pi" | "e" => tokens.push(Token::Constant(lowercase_name)),
+                    "sin" | "exp" => tokens.push(Token::Function(lowercase_name)),
+                    _ => tokens.push(Token::Variable(name)),
                 }
             },
             
@@ -331,14 +337,15 @@ fn tokenize(expression: &str) -> Result<Vec<Token>, String> {
     Ok(tokens)
 }
 
-// Parser struct to hold token iterator
+// Parser struct to hold token iterator and variable map
 struct Parser<'a> {
     tokens: std::iter::Peekable<std::slice::Iter<'a, Token>>,
+    variables: &'a mut std::collections::HashMap<String, f64>,
 }
 
 impl<'a> Parser<'a> {
-    fn new(tokens: &'a [Token]) -> Self {
-        Parser { tokens: tokens.iter().peekable() }
+    fn new(tokens: &'a [Token], variables: &'a mut std::collections::HashMap<String, f64>) -> Self {
+        Parser { tokens: tokens.iter().peekable(), variables }
     }
     
     // Parse a primary expression (number, constant, function call, or parenthesized expression)
@@ -378,6 +385,15 @@ impl<'a> Parser<'a> {
                     Ok(expr)
                 } else {
                     Err("Missing closing parenthesis".to_string())
+                }
+            },
+            
+            Some(Token::Variable(name)) => {
+                // Look up variable in the variables map
+                if let Some(&value) = self.variables.get(name) {
+                    Ok(value)
+                } else {
+                    Err(format!("Unknown variable: {}", name))
                 }
             },
             
@@ -425,6 +441,33 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
     
+    // Parse assignment expressions: variable = expression
+    fn parse_assignment(&mut self) -> Result<f64, String> {
+        // First check if we have an assignment
+        if let Some(Token::Variable(name)) = self.tokens.peek() {
+            // Look ahead to see if there's an equals sign
+            let mut peek_iter = self.tokens.clone();
+            peek_iter.next(); // Skip the variable
+            if let Some(Token::Equals) = peek_iter.peek() {
+                // It's an assignment: consume the variable and equals sign
+                self.tokens.next(); // Consume the variable
+                self.tokens.next(); // Consume the equals sign
+                
+                // Parse the expression on the right-hand side
+                let value = self.parse_expression()?;
+                
+                // Update the variable in the map
+                self.variables.insert(name.clone(), value);
+                
+                // Return the assigned value
+                return Ok(value);
+            }
+        }
+        
+        // Not an assignment, parse as regular expression
+        self.parse_expression()
+    }
+    
     // Parse addition and subtraction
     fn parse_expression(&mut self) -> Result<f64, String> {
         let mut left = self.parse_term()?;
@@ -450,7 +493,7 @@ impl<'a> Parser<'a> {
 }
 
 // Expression evaluation function with support for advanced features
-pub fn evaluate_expression(expression: &str) -> Result<f64, String> {
+pub fn evaluate_expression(expression: &str, variables: &mut std::collections::HashMap<String, f64>) -> Result<f64, String> {
     // Trim whitespace from the expression
     let trimmed = expression.trim();
     
@@ -462,6 +505,6 @@ pub fn evaluate_expression(expression: &str) -> Result<f64, String> {
     let tokens = tokenize(trimmed)?;
     
     // Parse and evaluate the expression
-    let mut parser = Parser::new(&tokens);
-    parser.parse_expression()
+    let mut parser = Parser::new(&tokens, variables);
+    parser.parse_assignment()
 }
