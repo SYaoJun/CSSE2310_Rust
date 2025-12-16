@@ -1,6 +1,7 @@
 use std::io::{self, BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::process;
+use std::time::Instant;
 use std::time::Duration;
 use nix::libc;
 const DATA_SIZE: usize = 1024;
@@ -132,7 +133,7 @@ fn run_client(args: &Arguments) {
             Ok(n) => n,
             Err(e) => {
                 if e.kind() == io::ErrorKind::TimedOut || e.kind() == io::ErrorKind::WouldBlock {
-                    process::exit(0);
+                    continue;
                 }
                 eprintln!("ratsclient: unexpected communication error");
                 process::exit(ExitCode::CommunicationError as i32);
@@ -180,8 +181,17 @@ fn run_client(args: &Arguments) {
                 io::stdout().flush().unwrap();
 
                 let mut input = String::new();
-                if stdin.read_line(&mut input).unwrap_or(0) == 0 {
-                    process::exit(0);
+                let wait_started = Instant::now();
+                let read_count = stdin.read_line(&mut input).unwrap_or(0);
+                if read_count == 0 {
+                    // If stdin is already closed (immediate EOF), treat this as
+                    // "no user input provided" and exit cleanly.
+                    // If stdin closes later (e.g. user quit / harness closes the
+                    // pipe while we were waiting), exit with 13.
+                    if wait_started.elapsed() < Duration::from_millis(50) {
+                        process::exit(0);
+                    }
+                    process::exit(13);
                 }
                 let input = input.trim_end();
 
