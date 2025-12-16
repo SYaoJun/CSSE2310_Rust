@@ -248,10 +248,11 @@ pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
             return Err(ExitError::Variable);
         }
         
+        // For-loop format is: name,start,increment,end
         let name = parts[0].trim();
         let start_str = parts[1].trim();
-        let end_str = parts[2].trim();
-        let incr_str = parts[3].trim();
+        let incr_str = parts[2].trim();
+        let end_str = parts[3].trim();
         
         // Validate loop variable name
         if !is_valid_var_name(name) {
@@ -270,8 +271,8 @@ pub fn check_variable(config: &mut Config) -> Result<(), ExitError> {
         
         // Parse numeric values
         let start = start_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
-        let end = end_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
         let increment = incr_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
+        let end = end_str.parse::<f64>().map_err(|_| ExitError::Variable)?;
         
         // Check for zero increment
         if increment == 0.0 {

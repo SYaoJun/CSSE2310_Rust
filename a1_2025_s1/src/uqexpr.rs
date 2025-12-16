@@ -74,8 +74,8 @@ fn print_state(config: &Config) {
                 loop_var.name,
                 format_value(loop_var.current, config.significant_figures),
                 format_value(loop_var.start, config.significant_figures),
-                format_value(loop_var.end, config.significant_figures),
-                increment_formatted
+                increment_formatted,
+                format_value(loop_var.end, config.significant_figures)
             );
         }
     }
@@ -88,6 +88,193 @@ fn sync_loop_current_from_map(config: &mut Config, name: &str, value: f64) {
             break;
         }
     }
+}
+
+fn find_loop_var_mut<'a>(config: &'a mut Config, name: &str) -> Option<&'a mut ForLoop> {
+    config.for_loop_struct_vec.iter_mut().find(|lv| lv.name == name)
+}
+
+fn find_loop_index(config: &Config, name: &str) -> Option<usize> {
+    config
+        .for_loop_struct_vec
+        .iter()
+        .position(|lv| lv.name == name)
+}
+
+fn format_loop_increment(config: &Config, increment: f64) -> String {
+    if increment.abs() >= 10000.0 && increment.fract() == 0.0 {
+        format_increment(increment)
+    } else {
+        format_value(increment, config.significant_figures)
+    }
+}
+
+fn print_loop_definition_line(config: &Config, loop_var: &ForLoop) {
+    println!(
+        "{} = {} ({}, {}, {})",
+        loop_var.name,
+        format_value(loop_var.current, config.significant_figures),
+        format_value(loop_var.start, config.significant_figures),
+        format_loop_increment(config, loop_var.increment),
+        format_value(loop_var.end, config.significant_figures)
+    );
+}
+
+fn handle_range_command(config: &mut Config, spec: &str) -> bool {
+    let parts: Vec<&str> = spec.split(',').map(|s| s.trim()).collect();
+    if parts.len() != 4 {
+        eprintln!("Invalid command, expression or assignment operation detected");
+        return true;
+    }
+
+    let name = parts[0];
+    if name.is_empty() {
+        eprintln!("Invalid command, expression or assignment operation detected");
+        return true;
+    }
+
+    let start: f64 = match parts[1].parse() {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Invalid command, expression or assignment operation detected");
+            return true;
+        }
+    };
+    let increment: f64 = match parts[2].parse() {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Invalid command, expression or assignment operation detected");
+            return true;
+        }
+    };
+    let end: f64 = match parts[3].parse() {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Invalid command, expression or assignment operation detected");
+            return true;
+        }
+    };
+
+    if increment == 0.0 {
+        eprintln!("Invalid command, expression or assignment operation detected");
+        return true;
+    }
+    if start < end {
+        if increment < 0.0 {
+            eprintln!("Invalid command, expression or assignment operation detected");
+            return true;
+        }
+    } else if start > end {
+        if increment > 0.0 {
+            eprintln!("Invalid command, expression or assignment operation detected");
+            return true;
+        }
+    }
+
+    if let Some(lv) = find_loop_var_mut(config, name) {
+        lv.start = start;
+        lv.increment = increment;
+        lv.end = end;
+        lv.current = start;
+    } else {
+        config.for_loop_struct_vec.push(ForLoop {
+            name: name.to_string(),
+            current: start,
+            start,
+            end,
+            increment,
+        });
+    }
+
+    // Ensure expression evaluator sees updated loop var.
+    config.init_map.insert(name.to_string(), start);
+
+    // Print only the definition line (no header) per tests.
+    let lv = config
+        .for_loop_struct_vec
+        .iter()
+        .find(|lv| lv.name == name)
+        .expect("loop var just inserted");
+    print_loop_definition_line(config, lv);
+    true
+}
+
+fn handle_loop_command(config: &mut Config, var_name: &str, expr: &str) -> bool {
+    let var_name = var_name.trim();
+    if var_name.is_empty() || expr.trim().is_empty() {
+        eprintln!("Invalid command, expression or assignment operation detected");
+        return true;
+    }
+
+    let Some(loop_idx) = find_loop_index(config, var_name) else {
+        eprintln!("Invalid command, expression or assignment operation detected");
+        return true;
+    };
+
+    // Copy loop range parameters so we don't hold a mutable borrow while
+    // mutating init_map / evaluating expressions.
+    let (start, inc, end) = {
+        let lv = &config.for_loop_struct_vec[loop_idx];
+        (lv.start, lv.increment, lv.end)
+    };
+
+    let sig = config.significant_figures;
+    let eps = 1e-9;
+    let mut cur = start;
+
+    loop {
+        if inc > 0.0 {
+            if cur > end + eps {
+                break;
+            }
+        } else {
+            if cur < end - eps {
+                break;
+            }
+        }
+
+        // Update loop current + make it available to the evaluator.
+        config.for_loop_struct_vec[loop_idx].current = cur;
+        config.init_map.insert(var_name.to_string(), cur);
+
+        let trimmed_expr = expr.trim();
+        let is_assignment = trimmed_expr.contains('=');
+        let eval_res = {
+            evaluate_expression(trimmed_expr, &mut config.init_map)
+        };
+        match eval_res {
+            Ok(result) => {
+                if is_assignment {
+                    let parts: Vec<&str> = trimmed_expr.split('=').collect();
+                    let lhs = parts.get(0).map(|s| s.trim()).unwrap_or("");
+                    println!(
+                        "{} = {} when {} = {}",
+                        lhs,
+                        format_result(result, sig),
+                        var_name,
+                        format_value(cur, sig)
+                    );
+
+                    // If assignment targets a loop var, sync current.
+                    sync_loop_current_from_map(config, lhs, result);
+                } else {
+                    println!(
+                        "Result = {} when {} = {}",
+                        format_result(result, sig),
+                        var_name,
+                        format_value(cur, sig)
+                    );
+                }
+            }
+            Err(_) => {
+                eprintln!("Invalid command, expression or assignment operation detected");
+            }
+        }
+
+        cur += inc;
+    }
+
+    true
 }
 
 fn format_increment(value: f64) -> String {
@@ -189,16 +376,59 @@ fn main() {
     if let Some(lines) = file_lines {
         // Process file content
         for line in lines {
-            let trimmed = line.trim();
-            if !trimmed.is_empty() {
-                if trimmed.starts_with('#') {
-                    continue;
-                }
+            let raw = line.trim_end();
+            if raw.trim().is_empty() {
+                continue;
+            }
 
-                if trimmed == "@print" {
-                    print_state(&config);
+            if raw.trim_start().starts_with('#') {
+                continue;
+            }
+
+            // Commands must start at column 1.
+            if raw == "@print" {
+                print_state(&config);
+                continue;
+            }
+
+            if raw.starts_with("@range ") {
+                // Exactly one space after @range.
+                if raw.as_bytes().get(7) == Some(&b' ') {
+                    eprintln!("Invalid command, expression or assignment operation detected");
                     continue;
                 }
+                let spec = &raw[7..];
+                handle_range_command(&mut config, spec);
+                continue;
+            } else if raw.starts_with("@range") {
+                // Anything else that begins with @range is invalid.
+                if raw.starts_with('@') {
+                    eprintln!("Invalid command, expression or assignment operation detected");
+                    continue;
+                }
+            }
+
+            if raw.starts_with("@loop ") {
+                // Exactly one space after @loop.
+                if raw.as_bytes().get(6) == Some(&b' ') {
+                    eprintln!("Invalid command, expression or assignment operation detected");
+                    continue;
+                }
+                let rest = &raw[6..];
+                let mut it = rest.splitn(2, char::is_whitespace);
+                let var = it.next().unwrap_or("").trim();
+                let expr = it.next().unwrap_or("");
+                handle_loop_command(&mut config, var, expr);
+                continue;
+            } else if raw.starts_with("@loop") {
+                if raw.starts_with('@') {
+                    eprintln!("Invalid command, expression or assignment operation detected");
+                    continue;
+                }
+            }
+
+            let trimmed = raw.trim();
+            if !trimmed.is_empty() {
 
                 // Check if it's an assignment
                 if trimmed.contains('=') {
@@ -239,16 +469,55 @@ fn main() {
         for line in stdin.lock().lines() {
             match line {
                 Ok(expression) => {
-                    let trimmed = expression.trim();
-                    if !trimmed.is_empty() {
-                        if trimmed.starts_with('#') {
-                            continue;
-                        }
+                    let raw = expression.trim_end();
+                    if raw.trim().is_empty() {
+                        continue;
+                    }
 
-                        if trimmed == "@print" {
-                            print_state(&config);
+                    if raw.trim_start().starts_with('#') {
+                        continue;
+                    }
+
+                    if raw == "@print" {
+                        print_state(&config);
+                        continue;
+                    }
+
+                    if raw.starts_with("@range ") {
+                        if raw.as_bytes().get(7) == Some(&b' ') {
+                            eprintln!("Invalid command, expression or assignment operation detected");
                             continue;
                         }
+                        let spec = &raw[7..];
+                        handle_range_command(&mut config, spec);
+                        continue;
+                    } else if raw.starts_with("@range") {
+                        if raw.starts_with('@') {
+                            eprintln!("Invalid command, expression or assignment operation detected");
+                            continue;
+                        }
+                    }
+
+                    if raw.starts_with("@loop ") {
+                        if raw.as_bytes().get(6) == Some(&b' ') {
+                            eprintln!("Invalid command, expression or assignment operation detected");
+                            continue;
+                        }
+                        let rest = &raw[6..];
+                        let mut it = rest.splitn(2, char::is_whitespace);
+                        let var = it.next().unwrap_or("").trim();
+                        let expr = it.next().unwrap_or("");
+                        handle_loop_command(&mut config, var, expr);
+                        continue;
+                    } else if raw.starts_with("@loop") {
+                        if raw.starts_with('@') {
+                            eprintln!("Invalid command, expression or assignment operation detected");
+                            continue;
+                        }
+                    }
+
+                    let trimmed = raw.trim();
+                    if !trimmed.is_empty() {
 
                         // Check if it's an assignment
                         if trimmed.contains('=') {
