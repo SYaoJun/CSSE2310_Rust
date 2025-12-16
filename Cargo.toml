@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "a1_2024_s2", "a1_2025_s1",
-    "a1_2025_s2", "a1_2026_s1"
+    "a1_2025_s2"
 ]
 resolver = "2"
 
