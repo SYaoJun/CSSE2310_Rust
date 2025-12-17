@@ -1,0 +1,10 @@
+1 open
+2 open
+3 open
+4 open
+sighup
+1 send player1\ngame\n
+2 send player2\ngame\n
+3 send player3\ngame\n
+4 send player4\ngame\n
+sighup

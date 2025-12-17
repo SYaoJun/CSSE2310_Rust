@@ -1,0 +1,13 @@
+1 open
+1 send P1\n
+1 send reallylonggamename\n
+2 open
+2 send P2\n
+2 send reallylonggamename\n
+3 open
+3 send P3\n
+3 send reallylonggamename\n
+4 open
+4 send P4\n
+4 send reallylonggamename\n
+1 close

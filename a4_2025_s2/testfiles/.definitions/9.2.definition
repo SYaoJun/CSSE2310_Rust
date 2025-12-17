@@ -1,0 +1,13 @@
+# Details for test 9.2.
+# $1 will be run_test, explain_test or mark_test.
+function test9.2() {
+    "$1" 9.2 "server_listens02" \
+        "Check ratsserver listens on given non-zero port" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/9.2.stdout \
+        --stderr testfiles/9.2.stderr \
+        "testfiles/check_server_port.sh" 'NUM'
+}

@@ -1,0 +1,13 @@
+# Details for test 4.12.
+# $1 will be run_test, explain_test or mark_test.
+function test4.12() {
+    "$1" 4.12 "client_user_and_server_input12" \
+        "Check ratsclient handles an unexpected message from the server" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 15 \
+        --stdout testfiles/4.12.stdout \
+        --stderr testfiles/4.12.stderr \
+        "testfiles/check_client_sequence.sh" 'testfiles/4.12.sequence' 'Harry' 'game'
+}

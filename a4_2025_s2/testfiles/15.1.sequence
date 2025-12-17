@@ -1,0 +1,9 @@
+1 open
+2 open
+1 send player1\n
+2 send player2\n
+1 read
+2 readtimeout 0.25
+1 close
+2 read
+2 close

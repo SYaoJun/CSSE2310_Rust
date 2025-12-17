@@ -1,0 +1,7 @@
+run echo hello world
+
+list
+
+run cat
+
+list

@@ -1,0 +1,15 @@
+# Details for test 11.2.
+# $1 will be run_test, explain_test or mark_test.
+function test11.2() {
+    "$1" 11.2 "server_invalid_plays02" \
+        "Check ratsserver handles a client playing a card that it already played previously" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/11.2.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/11.2.csse2310.totalthreadcount.txt" \
+        "A4_DECK=9D2C8SAD4CTHKH6HQCJCTSKC6D7S5CTDQD5DJH6S2D2SKD3CQH4H9H5SAS3DAC8CAH3S7CKS5H8HTC7DJS4SJD9C6C3H4D2H9SQS8D7H" \
+        "testfiles/check_server_sequence.sh" '0' 'Hello' 'testfiles/11.2.sequence'
+}

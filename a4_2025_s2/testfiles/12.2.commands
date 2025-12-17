@@ -1,0 +1,5 @@
+pipeline "cat -E -A -T" "cat -E -A -T" "cat -E -A -T"
+
+send <0> hello cat
+
+read <2>

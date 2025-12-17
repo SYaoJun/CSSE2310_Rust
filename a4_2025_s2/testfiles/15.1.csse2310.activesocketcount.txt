@@ -1,0 +1,8 @@
+Socket count reported before each request line. (0 assumed before any clients created.)
+Line 1: 0
+Line 2: 1
+Line 3: 1
+Line 4: 1
+Line 7: 1
+Line 9: 1
+End: 0

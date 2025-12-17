@@ -1,0 +1,74 @@
+name: Test All Directories
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+    
+    - name: Run tests in all directories except a4_2025_s2
+      run: |
+        set -e
+        
+        # Find all directories with test scripts, excluding a4_2025_s2
+        for dir in */; do
+          if [ "$dir" = "a4_2025_s2/" ]; then
+            echo "Skipping $dir (excluded by requirement)"
+            continue
+          fi
+          
+          # Check if directory contains a test script
+          if [ -f "${dir}testa1_rust.sh" ] || [ -f "${dir}testa4_rust.sh" ] || [ -f "${dir}test*.sh" ]; then
+            echo "Running tests in $dir"
+            cd "$dir"
+            
+            # Make test scripts executable
+            find . -name "test*.sh" -exec chmod +x {} \;
+            
+            # Run the main test script if it exists
+            if [ -f "testa1_rust.sh" ]; then
+              echo "Running testa1_rust.sh"
+              ./testa1_rust.sh
+            elif [ -f "testa4_rust.sh" ]; then
+              echo "Running testa4_rust.sh"
+              ./testa4_rust.sh
+            else
+              # Run any test script found
+              for test_script in test*.sh; do
+                if [ -f "$test_script" ]; then
+                  echo "Running $test_script"
+                  ./"$test_script"
+                fi
+              done
+            fi
+            
+            cd ..
+            echo "Completed tests in $dir"
+            echo "----------------------------------------"
+          else
+            echo "No test scripts found in $dir, skipping"
+          fi
+        done

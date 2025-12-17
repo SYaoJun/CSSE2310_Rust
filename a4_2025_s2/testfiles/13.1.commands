@@ -1,0 +1,3 @@
+run cat > /tmp/csse2310_a3_test_13.1.out
+
+send <0> hello cat

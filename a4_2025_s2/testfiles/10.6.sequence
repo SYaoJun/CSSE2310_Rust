@@ -1,0 +1,408 @@
+1 open
+1 send P1\n
+1 send reallylonggamename\n
+2 open
+2 send P2\n
+2 send reallylonggamename\n
+3 open
+3 send P3\n
+3 send reallylonggamename\n
+4 open
+4 send P4\n
+4 send reallylonggamename\n
+1 send AH\n
+1 send QH\n
+1 send AS\n
+1 send JS\n
+1 send 9S\n
+1 send QC\n
+1 send 6C\n
+1 send 4C\n
+1 send 2D\n
+1 send 5H\n
+1 send 6D\n
+1 send 9D\n
+2 send TH\n
+2 send 8H\n
+2 send QS\n
+2 send 7S\n
+2 send 4S\n
+2 send JC\n
+2 send 2C\n
+2 send 5D\n
+2 send 4H\n
+2 send 3H\n
+2 send 3D\n
+2 send 3S\n
+3 send 9H\n
+3 send JH\n
+3 send 8S\n
+3 send TS\n
+3 send 4D\n
+3 send 5C\n
+3 send 7C\n
+3 send AC\n
+3 send TC\n
+3 send KH\n
+3 send KD\n
+3 send JD\n
+4 send 7H\n
+4 send 6H\n
+4 send KS\n
+4 send 6S\n
+4 send 5S\n
+4 send 9C\n
+4 send 3C\n
+4 send KC\n
+4 send 8C\n
+4 send 2H\n
+4 send TD\n
+4 send 7D\n
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+1 send QD\n
+2 send 2S\n
+3 send 8D\n
+4 send AD\n
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+1 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+2 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+3 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+4 read
+1 readtimeout 0.25
+2 readtimeout 0.25
+3 readtimeout 0.25
+4 readtimeout 0.25

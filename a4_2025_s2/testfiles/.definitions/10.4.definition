@@ -1,0 +1,15 @@
+# Details for test 10.4.
+# $1 will be run_test, explain_test or mark_test.
+function test10.4() {
+    "$1" 10.4 "server_single_game04" \
+        "Check ratsserver handles four clients connecting to the same game with sorted names not in order of connection" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/10.4.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/10.4.csse2310.totalthreadcount.txt" \
+        "A4_DECK=JSTD2C8D5D8HTSKD3C3S2H6D5HTHTCQSKH4CJD6SAC9H9D7HKC7DQDKSAS8S2D6CJC3D2S7S6HJH7CAH4D9C4S4HAD3H5C5SQH8CQC9S" \
+        "testfiles/check_server_sequence.sh" '0' 'Welcome to Rats' 'testfiles/10.4.sequence'
+}

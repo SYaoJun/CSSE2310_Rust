@@ -1,0 +1,14 @@
+# Details for test 10.2.
+# $1 will be run_test, explain_test or mark_test.
+function test10.2() {
+    "$1" 10.2 "server_single_game02" \
+        "Check ratsserver handles four clients connecting to different games" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 0 \
+        --stdout testfiles/10.2.stdout \
+        --stderr testfiles/empty \
+        --file "/tmp/csse2310.totalthreadcount.txt" "testfiles/10.2.csse2310.totalthreadcount.txt" \
+        "testfiles/check_server_sequence.sh" '0' 'hi' 'testfiles/10.2.sequence'
+}

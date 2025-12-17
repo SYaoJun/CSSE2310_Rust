@@ -1,0 +1,21 @@
+1 open
+2 open
+3 open
+4 open
+5 openstats
+5 send GET /stats HTTP/1.1\r\n\r\n
+5 readHTTPresponse
+5 close
+1 send player1\ngame\n
+2 send player2\ngame\n
+3 send player3\ngame\n
+4 send player4\ngame\n
+6 openstats
+6 send GET /stats HTTP/1.1\r\n\r\n
+6 readHTTPresponse
+6 close
+1 close
+7 openstats
+7 send GET /stats HTTP/1.1\r\n\r\n
+7 readHTTPresponse
+7 close

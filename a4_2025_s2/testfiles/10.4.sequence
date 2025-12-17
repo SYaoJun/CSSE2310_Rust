@@ -1,0 +1,32 @@
+1 open
+1 send Harry\ngame\n
+1 read
+2 open
+2 send Hermione\ngame\n
+2 read
+3 open
+3 send Ron\ngame\n
+3 read
+4 open
+4 send Ginny\ngame\n
+4 read
+1 read
+1 read
+1 read
+1 read
+1 readtimeout 0.25
+2 read
+2 read
+2 read
+2 read
+2 readtimeout 0.25
+3 read
+3 read
+3 read
+3 read
+3 readtimeout 0.25
+4 read
+4 read
+4 read
+4 read
+4 read

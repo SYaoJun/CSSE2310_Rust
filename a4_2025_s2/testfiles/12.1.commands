@@ -1,0 +1,5 @@
+pipeline cat cat
+
+send <0> hello cat
+
+read <1>

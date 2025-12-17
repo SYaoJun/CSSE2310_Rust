@@ -1,0 +1,13 @@
+# Details for test 1.3.
+# $1 will be run_test, explain_test or mark_test.
+function test1.3() {
+    "$1" 1.3 "client_invalid_cmd_line03" \
+        "Check ratsclient reports usage error" \
+        --timeout 3 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --exit 1 \
+        --stdout testfiles/empty \
+        --stderr testfiles/1.3.stderr \
+        "./ratsclient" 'player'
+}

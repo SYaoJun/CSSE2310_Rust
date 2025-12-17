@@ -1,0 +1,11 @@
+# Details for test 4.3.
+# $1 will be run_test, explain_test or mark_test.
+function test4.3() {
+    "$1" 4.3 "client_user_and_server_input03" \
+        "Check ratsclient handles a hand from the server" \
+        --timeout 15 \
+        --maxattempts 5 \
+        --stdin "/dev/null" \
+        --stdout testfiles/4.3.stdout \
+        "testfiles/check_client_comms.sh" '--showclientoutput' '--serverresponse' 'testfiles/4.3.response' 'player' 'game'
+}
