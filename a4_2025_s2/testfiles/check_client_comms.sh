@@ -125,7 +125,7 @@ echo "$(date +%S.%N) - Server is listening" >"$debugfd"
 
 # Run client - timeout after 3.5 seconds
 echo "$(date +%S.%N) - Starting client" >"$debugfd"
-(sleep 2; echo -n "") | run_with_timeout 4 ${client} "$@" ${port} 2>&$errfd > /tmp/csse2310.client.$$.out
+run_with_timeout 4 ${client} "$@" ${port} 2>&$errfd > /tmp/csse2310.client.$$.out
 # Capture exit status of client
 status=$?
 echo "$(date +%S.%N) - Client exited with status $status" >"$debugfd"
