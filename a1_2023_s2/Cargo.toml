@@ -1,0 +1,6 @@
+[package]
+name = "a1_2023_s2"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
