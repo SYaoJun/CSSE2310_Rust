@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 
 use anyhow::Result;
 use error::{UQExprResult, UQExprError};

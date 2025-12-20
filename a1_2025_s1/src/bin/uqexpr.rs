@@ -1,4 +1,4 @@
-use a1_2025_s1::*;
+use uqexpr::*;
 use std::process::exit;
 
 fn format_value(value: f64, significant_figures: u8) -> String {

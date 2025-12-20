@@ -1,5 +1,5 @@
+pub mod error;
 pub mod utils;
-
 // Export core functions from uqentropy for testing
 pub struct Config {
     pub leet: bool,
