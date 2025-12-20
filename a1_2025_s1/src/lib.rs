@@ -1,4 +1,7 @@
+mod error;
+
 use anyhow::Result;
+use error::{UQExprResult, UQExprError};
 use std::f64::consts::{E, PI};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -46,7 +49,7 @@ pub struct ForLoop {
     pub increment: f64,
 }
 
-pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
+pub fn handle_command_line_arguments() ->  UQExprResult<Config> {
     let args: Vec<String> = std::env::args().collect();
 
     let mut config = Config {
@@ -64,37 +67,37 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
 
     while i < args.len() {
         if args[i].is_empty() {
-            return Err(ExitError::Usage);
+            return Err(UQExprError::InvalidExpression("Usage".to_string()));
         }
         match args[i].as_str() {
             "--init" => {
                 if i + 1 >= args.len() {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 config.init_string_vec.push(args[i + 1].clone());
                 i += 2;
             }
             "--significantfigures" => {
                 if i + 1 >= args.len() {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 if config.figure_flag {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 if has_leading_zero(args[i + 1].as_str()) {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 config.figure_flag = true;
                 let parse_int = args[i + 1].parse::<u8>();
                 match parse_int {
                     Err(_) => {
-                        return Err(ExitError::Usage);
+                        return Err(UQExprError::InvalidExpression("Usage".to_string()));
                     }
                     Ok(x) => {
                         if x >= 2 && x <= 8 {
                             config.significant_figures = x;
                         } else {
-                            return Err(ExitError::Usage);
+                            return Err(UQExprError::InvalidExpression("Usage".to_string()));
                         }
                     }
                 }
@@ -102,20 +105,20 @@ pub fn handle_command_line_arguments() -> Result<Config, ExitError> {
             }
             "--forloop" => {
                 if i + 1 >= args.len() {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 config.for_loop_vec.push(args[i + 1].clone());
                 i += 2;
             }
             _ => {
                 if i != args.len() - 1 {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 if args[i].starts_with("--") {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 if config.filename_flag {
-                    return Err(ExitError::Usage);
+                    return Err(UQExprError::InvalidExpression("Usage".to_string()));
                 }
                 config.input_filename = args[i].clone();
                 config.filename_flag = true;
