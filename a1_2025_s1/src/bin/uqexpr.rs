@@ -1,5 +1,5 @@
-use uqexpr::*;
 use std::process::exit;
+use uqexpr::*;
 
 fn format_value(value: f64, significant_figures: u8) -> String {
     if value == 0.0 {

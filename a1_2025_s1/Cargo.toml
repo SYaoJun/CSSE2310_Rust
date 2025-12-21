@@ -13,4 +13,4 @@ predicates = "3"
 tempfile = "3"
 [[bin]]
 name = "uqexpr"
-path = "src/uqexpr.rs"
+path = "src/bin/uqexpr.rs"

@@ -1,7 +1,7 @@
-use a1_2025_s1::*;
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
+use uqexpr::*;
 
 // 测试has_leading_zero函数
 #[test]

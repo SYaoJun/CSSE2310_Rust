@@ -1,7 +1,7 @@
 pub mod error;
 
 use anyhow::Result;
-use error::{UQExprResult, UQExprError};
+use error::{UQExprError, UQExprResult};
 use std::f64::consts::{E, PI};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -49,7 +49,7 @@ pub struct ForLoop {
     pub increment: f64,
 }
 
-pub fn handle_command_line_arguments() ->  UQExprResult<Config> {
+pub fn handle_command_line_arguments() -> UQExprResult<Config> {
     let args: Vec<String> = std::env::args().collect();
 
     let mut config = Config {

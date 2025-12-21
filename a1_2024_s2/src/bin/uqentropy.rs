@@ -1,5 +1,3 @@
-use a1_2024_s2::error::{UQEntropyError, UQEntropyResult};
-use a1_2024_s2::utils::log::init_logging;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::env;
@@ -7,6 +5,8 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
 use thiserror::Error;
+use uqentropy::error::{UQEntropyError, UQEntropyResult};
+use uqentropy::utils::log::init_logging;
 
 struct Config {
     leet: bool,
