@@ -1,7 +1,6 @@
-use a1_2024_s2::*;
 use assert_cmd::cargo::cargo_bin_cmd;
 use predicates::prelude::*;
-use std::process::Command;
+use uqentropy::*;
 
 // 测试calculate_entropy函数
 #[test]

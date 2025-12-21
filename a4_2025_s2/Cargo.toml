@@ -1,5 +1,5 @@
 [package]
-name = "a4_2025_s2"
+name = "rats"
 version = "0.1.0"
 edition = "2021"
 
@@ -22,18 +22,3 @@ path = "src/ratsclient.rs"
 name = "ratsserver"
 path = "src/ratsserver.rs"
 
-[[bin]]
-name = "tcpserver"
-path = "src/tcpserver.rs"
-
-[[bin]]
-name = "tcpclient"
-path = "src/tcpclient.rs"
-
-[[bin]]
-name = "tokio_tcpserver"
-path = "src/tokio_tcpserver.rs"
-
-[[bin]]
-name = "tokio_tcpclient"
-path = "src/tokio_tcpclient.rs"

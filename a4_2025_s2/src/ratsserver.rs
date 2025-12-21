@@ -1,12 +1,15 @@
 use std::io::Read;
 use std::net::TcpListener;
 use std::process;
-use std::sync::{Arc, Condvar, Mutex, atomic::{AtomicUsize, Ordering}};
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc, Condvar, Mutex,
+};
 use std::thread;
 
-use std::io;
 use signal_hook::consts;
 use signal_hook::iterator;
+use std::io;
 
 // 简单的信号量实现
 struct ConnectionSemaphore {
@@ -25,22 +28,23 @@ impl ConnectionSemaphore {
             mutex: Mutex::new(()),
         }
     }
-    
+
     fn try_acquire(&self) -> bool {
         let current = self.count.load(Ordering::SeqCst);
         if current > 0 {
-            self.count.compare_exchange(current, current - 1, Ordering::SeqCst, Ordering::Relaxed).is_ok()
+            self.count
+                .compare_exchange(current, current - 1, Ordering::SeqCst, Ordering::Relaxed)
+                .is_ok()
         } else {
             false
         }
     }
-    
+
     fn release(&self) {
         self.count.fetch_add(1, Ordering::SeqCst);
         self.condvar.notify_one();
     }
 }
-
 
 // 状态枚举
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -58,7 +62,7 @@ struct Arguments {
     port: Option<String>,
     message: String,
 }
-struct ContextInfo{
+struct ContextInfo {
     current_connected: i32,
     total_connected: i32,
     running_games: i32,
@@ -82,7 +86,7 @@ impl ClientInfo {
         ClientInfo {
             next: None,
             tcp_stream: stream,
-            name: String::new(),    
+            name: String::new(),
             game_name: String::new(),
             state: State::IDLE,
             idx: 0,
@@ -91,10 +95,13 @@ impl ClientInfo {
     }
 }
 
-fn handle_new_connection( client_info: ClientInfo, context_info: Arc<Mutex<ContextInfo>>) -> std::io::Result<()> {
+fn handle_new_connection(
+    client_info: ClientInfo,
+    context_info: Arc<Mutex<ContextInfo>>,
+) -> std::io::Result<()> {
     let mut stream = client_info.tcp_stream.try_clone().unwrap();
     let mut buffer = [0; 1024];
-    loop{
+    loop {
         match stream.read(&mut buffer) {
             Ok(0) => {
                 // 读到0字节，表示连接已断开
@@ -116,25 +123,25 @@ fn handle_new_connection( client_info: ClientInfo, context_info: Arc<Mutex<Conte
                 let _ = e;
                 break;
             }
-        } 
+        }
     }
     let mut context_info_guard = context_info.lock().unwrap();
-    context_info_guard.current_connected -= 1;  
+    context_info_guard.current_connected -= 1;
     context_info_guard.games_completed += 1;
     Ok(())
 }
 
 /// 启动服务器的函数
-/// 
+///
 /// # 参数
 /// * `port` - 服务器监听的端口
 /// * `maxconns` - 最大连接数
-/// 
+///
 /// # 返回值
 /// * `Ok(())` - 服务器正常启动
 /// * `Err(e)` - 服务器启动失败
 fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
-    let context_info = Arc::new(Mutex::new(ContextInfo{
+    let context_info = Arc::new(Mutex::new(ContextInfo {
         current_connected: 0,
         total_connected: 0,
         running_games: 0,
@@ -143,22 +150,28 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
         total_tricks: 0,
         max_connections: maxconns as i32,
     }));
-    
+
     let _ = std::process::id();
-    
+
     // 在单独的线程中处理信号
     let context_info_clone_sig = context_info.clone();
     thread::spawn(move || {
         // 使用signal_hook库注册SIGHUP信号处理
-        let mut signal_receiver = iterator::Signals::new(&[consts::SIGHUP])
-            .expect("Failed to register signal handler");
-        
+        let mut signal_receiver =
+            iterator::Signals::new(&[consts::SIGHUP]).expect("Failed to register signal handler");
+
         // 无限循环等待信号
         for signal in signal_receiver.forever() {
             if signal == consts::SIGHUP {
                 let context_info_guard = context_info_clone_sig.lock().unwrap();
-                eprintln!("Players connected: {}", context_info_guard.current_connected);
-                eprintln!("Total connected players: {}", context_info_guard.total_connected);
+                eprintln!(
+                    "Players connected: {}",
+                    context_info_guard.current_connected
+                );
+                eprintln!(
+                    "Total connected players: {}",
+                    context_info_guard.total_connected
+                );
                 eprintln!("Running games: {}", context_info_guard.running_games);
                 eprintln!("Games completed: {}", context_info_guard.games_completed);
                 eprintln!("Games terminated: {}", context_info_guard.games_terminated);
@@ -166,12 +179,12 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
             }
         }
     });
-    
+
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port))?;
     let local_port = listener.local_addr().map(|a| a.port()).unwrap_or(0);
     eprintln!("{}", local_port);
-   
-    loop{
+
+    loop {
         let stream = match listener.accept() {
             Ok((stream, _addr)) => stream,
             Err(e) => {
@@ -187,11 +200,11 @@ fn start_server(port: &str, maxconns: usize) -> io::Result<()> {
                 drop(lock);
                 continue;
             }
-             lock.current_connected += 1;
+            lock.current_connected += 1;
             lock.total_connected += 1;
         }
         std::thread::spawn(move || {
-            if let Err(e) = handle_new_connection( client_info, context_info_clone) {
+            if let Err(e) = handle_new_connection(client_info, context_info_clone) {
                 eprintln!("Error handling connection: {}", e);
             }
         });
@@ -242,12 +255,12 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::TcpStream;
-    use std::time::Duration;
     use nix::sys::signal::{self, Signal};
     use nix::unistd::Pid;
+    use std::net::TcpStream;
     use std::thread;
     use std::thread::JoinHandle;
+    use std::time::Duration;
 
     // 运行测试的辅助函数，带有超时
     fn run_test_with_timeout<F>(test_func: F, timeout: Duration) -> Result<(), String>
@@ -295,10 +308,10 @@ mod tests {
 
                 // 尝试连接服务器
                 let result = TcpStream::connect(format!("127.0.0.1:{}", test_port));
-                
+
                 // 验证连接成功
                 assert!(result.is_ok(), "Failed to connect to server");
-                
+
                 // 关闭连接
                 if let Ok(mut stream) = result {
                     let _ = stream.shutdown(std::net::Shutdown::Both);
@@ -333,13 +346,17 @@ mod tests {
 
                 // 第二个服务器应该返回错误
                 let result = std::net::TcpListener::bind(format!("127.0.0.1:{}", test_port));
-                
+
                 // 验证端口被占用
                 assert!(result.is_err(), "Expected port to be in use, but it wasn't");
-                
+
                 // 检查错误类型是否为地址已在使用
                 if let Err(e) = result {
-                    assert_eq!(e.kind(), std::io::ErrorKind::AddrInUse, "Expected AddrInUse error");
+                    assert_eq!(
+                        e.kind(),
+                        std::io::ErrorKind::AddrInUse,
+                        "Expected AddrInUse error"
+                    );
                 }
 
                 // 注意：这里我们没有优雅地关闭第一个服务器
@@ -374,7 +391,7 @@ mod tests {
 
                 // 向服务器发送 SIGHUP 信号
                 let result = signal::kill(pid, Signal::SIGHUP);
-                
+
                 // 验证信号发送成功
                 assert!(result.is_ok(), "Failed to send SIGHUP signal");
 
@@ -383,8 +400,11 @@ mod tests {
 
                 // 验证服务器仍然在运行（可以继续接受连接）
                 let connection_result = TcpStream::connect(format!("127.0.0.1:{}", test_port));
-                assert!(connection_result.is_ok(), "Server crashed after receiving SIGHUP signal");
-                
+                assert!(
+                    connection_result.is_ok(),
+                    "Server crashed after receiving SIGHUP signal"
+                );
+
                 // 关闭连接
                 if let Ok(mut stream) = connection_result {
                     let _ = stream.shutdown(std::net::Shutdown::Both);

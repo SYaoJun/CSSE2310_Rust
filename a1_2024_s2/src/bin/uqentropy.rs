@@ -1,20 +1,13 @@
+use anyhow::Result;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::exit;
-
-use a1_2024_s2::utils::log::init_logging;
-use anyhow::Result;
 use thiserror::Error;
+use uqentropy::error::{UQEntropyError, UQEntropyResult};
+use uqentropy::utils::log::init_logging;
 
-#[derive(Debug, Error)]
-enum ExitError {
-    #[error("usage")]
-    Usage,
-    #[error("file")]
-    File(String),
-}
 struct Config {
     leet: bool,
     case_sensitive: bool,
@@ -114,7 +107,6 @@ fn check_password_is_valid(password: &str) -> bool {
 }
 #[warn(clippy::too_many_lines)]
 fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config) {
-    let mut error_occurred = false;
     // 打印文件数量
     log::info!(
         "Reading {} file{}",
@@ -123,11 +115,8 @@ fn read_file(filenames: &[String], passwords: &mut Vec<String>, config: &Config)
     );
     for fname in filenames {
         if let Err(_) = read_single_file(fname, passwords, config) {
-            error_occurred = true;
+            exit(ExitCodes::InvalidFile as i32);
         }
-    }
-    if error_occurred {
-        exit(ExitCodes::InvalidFile as i32);
     }
 }
 
@@ -135,10 +124,18 @@ fn read_single_file(
     fname: &String,
     passwords: &mut Vec<String>,
     _config: &Config,
-) -> Result<(), ()> {
-    let file = File::open(fname).map_err(|_| {
-        eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
-    })?;
+) -> Result<(), std::io::Error> {
+    let file = File::open(fname);
+    let file = match file {
+        Ok(f) => f,
+        Err(_) => {
+            eprintln!("uqentropy: unable to open file \"{}\" for reading", fname);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Unable to open file",
+            ));
+        }
+    };
 
     let reader = BufReader::new(file);
     let mut has_valid_password = false;
@@ -156,7 +153,10 @@ fn read_single_file(
             }
             Err(_) => {
                 eprintln!("uqentropy: error reading file \"{}\"", fname);
-                return Err(());
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Error reading file",
+                ));
             }
         }
     }
@@ -164,10 +164,16 @@ fn read_single_file(
     if !has_valid_password {
         eprintln!("uqentropy: \"{}\" does not contain any passwords", fname);
         std::io::stderr().flush().unwrap();
-        return Err(());
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "No passwords found",
+        ));
     }
     if invalid_lines > 0 {
-        return Err(());
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Invalid lines found",
+        ));
     }
     Ok(())
 }

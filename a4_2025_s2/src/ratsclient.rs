@@ -1,15 +1,15 @@
+use nix::libc;
 use std::io::{self, BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::process;
-use std::time::Instant;
 use std::time::Duration;
-use nix::libc;
+use std::time::Instant;
 const DATA_SIZE: usize = 1024;
 const SPADES_MAX: i32 = 56;
 const CLUBS_MAX: i32 = 42;
 const DIAMONDS_MAX: i32 = 28;
 const HEARTS_MAX: i32 = 14;
-enum ExitCode{
+enum ExitCode {
     ArgumentError = 1,
     InvalidArgument = 3,
     ConnectionFailed = 8,
@@ -232,7 +232,7 @@ fn main() {
         eprintln!("Usage: ./ratsclient playername game port");
         process::exit(ExitCode::ArgumentError as i32);
     }
-    
+
     // 检查是否有参数为空
     if !check_arguments(&args) {
         eprintln!("Usage: ./ratsclient playername game port");
@@ -254,10 +254,10 @@ fn main() {
 }
 
 #[cfg(test)]
-mod tests { 
+mod tests {
     use super::*;
     #[test]
-    fn test_arguments(){
+    fn test_arguments() {
         let args = vec![
             String::from("player1"),
             String::from("game1"),
